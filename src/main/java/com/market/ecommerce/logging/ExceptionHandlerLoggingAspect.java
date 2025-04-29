@@ -1,5 +1,8 @@
 package com.market.ecommerce.logging;
 
+import com.market.ecommerce.exception.user.MultiUserException;
+import com.market.ecommerce.exception.user.UserErrorCode;
+import com.market.ecommerce.exception.user.UserException;
 import lombok.extern.slf4j.Slf4j;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
@@ -17,7 +20,14 @@ public class ExceptionHandlerLoggingAspect {
         Object[] args = joinPoint.getArgs();
 
         for (Object arg : args) {
-            if (arg instanceof Exception ex) {
+            if (arg instanceof MultiUserException multiEx) {
+                log.error("[MultiUserException 발생] 예외 클래스: {}", multiEx.getClass().getSimpleName());
+                for (UserErrorCode errorCode : multiEx.getErrorCodes()) {
+                    log.error("    - 코드: {}, 메시지: {}", errorCode.name(), errorCode.getMessage());
+                }
+            } else if (arg instanceof UserException ex){
+                log.error("[UserException 발생] 예외 클래스: {}, 메시지: {}", ex.getClass().getSimpleName(), ex.getMessage(), ex);
+            } else if (arg instanceof Exception ex) {
                 log.error("[ExceptionHandler 동작] 예외 클래스: {}, 메시지: {}", ex.getClass().getSimpleName(), ex.getMessage(), ex);
             }
         }
