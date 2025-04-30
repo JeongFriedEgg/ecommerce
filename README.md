@@ -2,5 +2,5 @@
 
 
 ## ERD 설계
-![ERD.jpg](ERD.jpg)
+![ERD1.jpg](ERD1.jpg)
 https://www.erdcloud.com/d/J9rwTMoJ3f2hoBn3W
