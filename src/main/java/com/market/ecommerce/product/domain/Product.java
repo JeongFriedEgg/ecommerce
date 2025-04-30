@@ -2,6 +2,7 @@ package com.market.ecommerce.product.domain;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.market.ecommerce.product.dto.ProductRegister;
+import com.market.ecommerce.product.dto.ProductUpdate;
 import com.market.ecommerce.product.type.ProductStatus;
 import com.market.ecommerce.user.domain.User;
 import jakarta.persistence.*;
@@ -70,5 +71,14 @@ public class Product {
                 .stock(req.getStock())
                 .status(status)
                 .build();
+    }
+
+    public void update(ProductUpdate.Request req, Category category, ProductStatus status) {
+        this.name = req.getName();
+        this.description = req.getDescription();
+        this.price = req.getPrice();
+        this.stock = req.getStock();
+        this.category = category;
+        this.status = status;
     }
 }

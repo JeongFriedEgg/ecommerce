@@ -4,7 +4,9 @@ import com.market.ecommerce.exception.product.ProductException;
 import com.market.ecommerce.exception.user.UserException;
 import com.market.ecommerce.product.domain.Category;
 import com.market.ecommerce.product.domain.Product;
+import com.market.ecommerce.product.dto.ProductDelete;
 import com.market.ecommerce.product.dto.ProductRegister;
+import com.market.ecommerce.product.dto.ProductUpdate;
 import com.market.ecommerce.product.repository.CategoryRepository;
 import com.market.ecommerce.product.repository.ProductRepository;
 import com.market.ecommerce.product.type.ProductStatus;
@@ -48,5 +50,42 @@ public class ProductService {
         } catch (IllegalArgumentException | NullPointerException exception) {
             throw new ProductException(INVALID_PRODUCT_STATUS);
         }
+    }
+
+    @Transactional
+    public ProductUpdate.Response updateProduct(ProductUpdate.Request req) {
+        Product product = productRepository.findById(req.getProductId())
+                .orElseThrow(() -> new ProductException(PRODUCT_NOT_FOUND));
+
+        User user = userRepository.findByUserId(req.getUserId())
+                .orElseThrow(() -> new UserException(USER_NOT_FOUND));
+
+        if (!product.getUser().getId().equals(user.getId())) {
+            throw new ProductException(PRODUCT_ACCESS_DENIED);
+        }
+
+        Category category = categoryRepository.findById(Long.parseLong(req.getCategory()))
+                .orElseThrow(() -> new ProductException(INVALID_CATEGORY));
+
+        ProductStatus status = parseProductStatus(req.getStatus());
+
+        product.update(req, category, status);
+
+        return ProductUpdate.Response.from(product);
+    }
+
+    @Transactional
+    public void deleteProduct(ProductDelete req) {
+        Product product = productRepository.findById(req.getProductId())
+                .orElseThrow(() -> new ProductException(PRODUCT_NOT_FOUND));
+
+        User user = userRepository.findByUserId(req.getUserId())
+                .orElseThrow(() -> new UserException(USER_NOT_FOUND));
+
+        if (!product.getUser().getId().equals(user.getId())) {
+            throw new ProductException(PRODUCT_ACCESS_DENIED);
+        }
+
+        productRepository.delete(product);
     }
 }
