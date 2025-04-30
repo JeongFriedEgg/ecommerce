@@ -1,3 +1,6 @@
+src/main/resources/application-kakaopay.properties
+src/main/resources/application-tosspay.properties
+
 # Created by https://www.toptal.com/developers/gitignore/api/macos,intellij+all
 # Edit at https://www.toptal.com/developers/gitignore?templates=macos,intellij+all
 
