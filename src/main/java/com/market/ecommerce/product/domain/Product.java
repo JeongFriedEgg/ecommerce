@@ -70,6 +70,8 @@ public class Product {
                 .price(req.getPrice())
                 .stock(req.getStock())
                 .status(status)
+                .createdAt(LocalDateTime.now().withNano(0))
+                .updatedAt(LocalDateTime.now().withNano(0))
                 .build();
     }
 
@@ -80,5 +82,6 @@ public class Product {
         this.stock = req.getStock();
         this.category = category;
         this.status = status;
+        this.updatedAt = LocalDateTime.now().withNano(0);
     }
 }

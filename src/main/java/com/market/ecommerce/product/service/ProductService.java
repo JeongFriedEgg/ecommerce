@@ -29,20 +29,39 @@ public class ProductService {
 
     @Transactional
     public ProductRegister.Response registerProduct(ProductRegister.Request req) {
-        User user = userRepository.findByUserId(req.getUserId())
-                .orElseThrow(() -> new UserException(USER_NOT_FOUND));
-
-        Category category = categoryRepository.findById(Long.parseLong(req.getCategory()))
-                .orElseThrow(() -> new ProductException(INVALID_CATEGORY));
-
+        User user = getUserOrThrow(req.getUserId());
+        Category category = getCategoryOrThrow(req.getCategory());
         ProductStatus status = parseProductStatus(req.getStatus());
 
         Product product = Product.create(user, category, req, status);
-
         productRepository.save(product);
 
         return ProductRegister.Response.from(product);
     }
+
+    @Transactional
+    public ProductUpdate.Response updateProduct(ProductUpdate.Request req) {
+        Product product = getProductOrThrow(req.getProductId());
+        User user = getUserOrThrow(req.getUserId());
+        validateOwnership(product, user);
+
+        Category category = getCategoryOrThrow(req.getCategory());
+        ProductStatus status = parseProductStatus(req.getStatus());
+
+        product.update(req, category, status);
+        return ProductUpdate.Response.from(product);
+    }
+
+    @Transactional
+    public void deleteProduct(ProductDelete req) {
+        Product product = getProductOrThrow(req.getProductId());
+        User user = getUserOrThrow(req.getUserId());
+        validateOwnership(product, user);
+
+        productRepository.delete(product);
+    }
+
+
 
     private ProductStatus parseProductStatus(String statusStr) {
         try {
@@ -52,40 +71,29 @@ public class ProductService {
         }
     }
 
-    @Transactional
-    public ProductUpdate.Response updateProduct(ProductUpdate.Request req) {
-        Product product = productRepository.findById(req.getProductId())
-                .orElseThrow(() -> new ProductException(PRODUCT_NOT_FOUND));
-
-        User user = userRepository.findByUserId(req.getUserId())
+    private User getUserOrThrow(String userId) {
+        return userRepository.findByUserId(userId)
                 .orElseThrow(() -> new UserException(USER_NOT_FOUND));
-
-        if (!product.getUser().getId().equals(user.getId())) {
-            throw new ProductException(PRODUCT_ACCESS_DENIED);
-        }
-
-        Category category = categoryRepository.findById(Long.parseLong(req.getCategory()))
-                .orElseThrow(() -> new ProductException(INVALID_CATEGORY));
-
-        ProductStatus status = parseProductStatus(req.getStatus());
-
-        product.update(req, category, status);
-
-        return ProductUpdate.Response.from(product);
     }
 
-    @Transactional
-    public void deleteProduct(ProductDelete req) {
-        Product product = productRepository.findById(req.getProductId())
+    private Product getProductOrThrow(Long productId) {
+        return productRepository.findById(productId)
                 .orElseThrow(() -> new ProductException(PRODUCT_NOT_FOUND));
+    }
 
-        User user = userRepository.findByUserId(req.getUserId())
-                .orElseThrow(() -> new UserException(USER_NOT_FOUND));
+    private Category getCategoryOrThrow(String categoryIdStr) {
+        try {
+            Long categoryId = Long.parseLong(categoryIdStr);
+            return categoryRepository.findById(categoryId)
+                    .orElseThrow(() -> new ProductException(INVALID_CATEGORY));
+        } catch (NumberFormatException e) {
+            throw new ProductException(INVALID_CATEGORY);
+        }
+    }
 
+    private void validateOwnership(Product product, User user) {
         if (!product.getUser().getId().equals(user.getId())) {
             throw new ProductException(PRODUCT_ACCESS_DENIED);
         }
-
-        productRepository.delete(product);
     }
 }

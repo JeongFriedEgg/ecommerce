@@ -18,10 +18,10 @@ public class UserController {
     private final UserService userService;
 
     @PostMapping("/signup")
-    public ResponseEntity<SignUp.SignUpResponse> signUp(
-            @RequestBody SignUp.SignUpRequest req
+    public ResponseEntity<SignUp.Response> signUp(
+            @RequestBody SignUp.Request req
     ){
-        SignUp.SignUpResponse res = userService.signUp(req);
+        SignUp.Response res = userService.signUp(req);
         return ResponseEntity
                 .status(HttpStatus.CREATED)
                 .body(res);

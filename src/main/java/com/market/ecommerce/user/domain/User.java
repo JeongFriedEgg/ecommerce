@@ -56,7 +56,7 @@ public class User {
     private LocalDateTime updatedAt;
 
 
-    public static User from(SignUp.SignUpRequest req) {
+    public static User from(SignUp.Request req) {
         return User.builder()
                 .userId(req.getUserId())
                 .password(req.getPassword())

@@ -9,7 +9,7 @@ public class SignUp {
 
     @Getter
     @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
-    public static class SignUpRequest {
+    public static class Request {
         private String userId;
         private String password;
         private String email;
@@ -21,12 +21,12 @@ public class SignUp {
     @Getter
     @Builder
     @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
-    public static class SignUpResponse {
+    public static class Response {
         private String userId;
         private String createdDate;
 
-        public static SignUpResponse from(User user) {
-            return SignUpResponse.builder()
+        public static Response from(User user) {
+            return Response.builder()
                     .userId(user.getUserId())
                     .createdDate(user.getCreatedAt().toString())
                     .build();

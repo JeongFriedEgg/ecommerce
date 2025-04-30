@@ -2,7 +2,6 @@ package com.market.ecommerce.user.service;
 
 import com.market.ecommerce.exception.user.MultiUserException;
 import com.market.ecommerce.exception.user.UserErrorCode;
-import com.market.ecommerce.exception.user.UserException;
 import com.market.ecommerce.user.domain.User;
 import com.market.ecommerce.user.dto.SignUp;
 import com.market.ecommerce.user.repository.UserRepository;
@@ -13,15 +12,13 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
-import static com.market.ecommerce.exception.user.UserErrorCode.*;
-
 @Service
 @RequiredArgsConstructor
 public class UserService {
 
     private final UserRepository userRepository;
 
-    public SignUp.SignUpResponse signUp(SignUp.SignUpRequest req) {
+    public SignUp.Response signUp(SignUp.Request req) {
         List<Object[]> conflicts = userRepository.findConflictingUserInfo(
                 req.getUserId(), req.getEmail(), req.getPhoneNumber()
         );
@@ -35,10 +32,10 @@ public class UserService {
         User user = User.from(req);
         userRepository.save(user);
 
-        return SignUp.SignUpResponse.from(user);
+        return SignUp.Response.from(user);
     }
 
-    private List<UserErrorCode> extractConflictErrorCodes(List<Object[]> conflicts, SignUp.SignUpRequest req) {
+    private List<UserErrorCode> extractConflictErrorCodes(List<Object[]> conflicts, SignUp.Request req) {
         List<UserErrorCode> errorCodes = new ArrayList<>();
 
         for (Object[] conflict : conflicts) {

@@ -1,5 +1,6 @@
 package com.market.ecommerce.logging;
 
+import com.market.ecommerce.exception.product.ProductException;
 import com.market.ecommerce.exception.user.MultiUserException;
 import com.market.ecommerce.exception.user.UserErrorCode;
 import com.market.ecommerce.exception.user.UserException;
@@ -27,6 +28,8 @@ public class ExceptionHandlerLoggingAspect {
                 }
             } else if (arg instanceof UserException ex){
                 log.error("[UserException 발생] 예외 클래스: {}, 메시지: {}", ex.getClass().getSimpleName(), ex.getMessage(), ex);
+            } else if (arg instanceof ProductException ex){
+                log.error("[ProductException 발생] 예외 클래스: {}, 메시지: {}", ex.getClass().getSimpleName(), ex.getMessage(), ex);
             } else if (arg instanceof Exception ex) {
                 log.error("[ExceptionHandler 동작] 예외 클래스: {}, 메시지: {}", ex.getClass().getSimpleName(), ex.getMessage(), ex);
             }
