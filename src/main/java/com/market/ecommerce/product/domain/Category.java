@@ -9,7 +9,7 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "Category")
+@Table(name = "category")
 @Getter
 @Setter
 @Builder
@@ -26,7 +26,7 @@ public class Category {
     private String name;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @Column(name = "parent_id")
+    @JoinColumn(name = "parent_id")
     private Category parent;
 
     @CreatedDate
