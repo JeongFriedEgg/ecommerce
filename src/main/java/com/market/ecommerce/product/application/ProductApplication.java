@@ -1,5 +1,7 @@
 package com.market.ecommerce.product.application;
 
+import com.market.ecommerce.category.domain.Category;
+import com.market.ecommerce.category.service.CategoryService;
 import com.market.ecommerce.product.domain.Product;
 import com.market.ecommerce.product.dto.ProductDelete;
 import com.market.ecommerce.product.dto.ProductRegister;
@@ -17,18 +19,21 @@ public class ProductApplication {
 
     private final ProductService productService;
     private final UserService userService;
+    private final CategoryService categoryService;
 
     @Transactional
     public ProductRegister.Response registerProduct(ProductRegister.Request req){
         User user = userService.findUserOrThrow(req.getUserId());
-        Product product = productService.registerProduct(user,req);
+        Category category = categoryService.findCategoryOrThrow(req.getCategory());
+        Product product = productService.registerProduct(user,category,req);
         return ProductRegister.Response.from(product);
     }
 
     @Transactional
     public ProductUpdate.Response updateProduct(ProductUpdate.Request req){
         User user = userService.findUserOrThrow(req.getUserId());
-        Product product = productService.updateProduct(user, req);
+        Category category = categoryService.findCategoryOrThrow(req.getCategory());
+        Product product = productService.updateProduct(user, category, req);
         return ProductUpdate.Response.from(product);
     }
 

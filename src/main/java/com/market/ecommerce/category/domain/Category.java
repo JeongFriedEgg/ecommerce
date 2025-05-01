@@ -1,4 +1,4 @@
-package com.market.ecommerce.product.domain;
+package com.market.ecommerce.category.domain;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import jakarta.persistence.*;

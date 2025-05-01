@@ -1,6 +1,7 @@
 package com.market.ecommerce.product.domain;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.market.ecommerce.category.domain.Category;
 import com.market.ecommerce.product.dto.ProductRegister;
 import com.market.ecommerce.product.dto.ProductUpdate;
 import com.market.ecommerce.product.type.ProductStatus;

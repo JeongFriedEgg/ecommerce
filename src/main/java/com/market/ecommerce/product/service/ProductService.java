@@ -1,10 +1,9 @@
 package com.market.ecommerce.product.service;
 
 import com.market.ecommerce.exception.product.ProductException;
-import com.market.ecommerce.product.domain.Category;
+import com.market.ecommerce.category.domain.Category;
 import com.market.ecommerce.product.domain.Product;
 import com.market.ecommerce.product.dto.*;
-import com.market.ecommerce.product.repository.CategoryRepository;
 import com.market.ecommerce.product.repository.ProductRepository;
 import com.market.ecommerce.product.type.ProductStatus;
 import com.market.ecommerce.user.domain.User;
@@ -20,25 +19,19 @@ import static com.market.ecommerce.exception.product.ProductErrorCode.*;
 public class ProductService {
 
     private final ProductRepository productRepository;
-    private final CategoryRepository categoryRepository;
 
     @Transactional
-    public Product registerProduct(User user, ProductRegister.Request req) {
-        Category category = findCategoryOrThrow(req.getCategory());
+    public Product registerProduct(User user, Category category, ProductRegister.Request req) {
         ProductStatus status = parseProductStatus(req.getStatus());
-
         Product product = Product.create(user, category, req, status);
         return productRepository.save(product);
     }
 
     @Transactional
-    public Product updateProduct(User user, ProductUpdate.Request req) {
+    public Product updateProduct(User user, Category category, ProductUpdate.Request req) {
         Product product = findProductOrThrow(req.getProductId());
         validateOwnership(product, user);
-
-        Category category = findCategoryOrThrow(req.getCategory());
         ProductStatus status = parseProductStatus(req.getStatus());
-
         product.update(req, category, status);
         return product;
     }
@@ -57,7 +50,8 @@ public class ProductService {
     }
 
     @Transactional(readOnly = true)
-    public Page<ProductConditionSearch.Response> getProductList(ProductConditionSearch.Request req, Pageable pageable) {
+    public Page<ProductConditionSearch.Response> getProductList(
+            ProductConditionSearch.Request req, Pageable pageable) {
         return productRepository.search(req, pageable)
                 .map(ProductConditionSearch.Response::from);
     }
@@ -65,32 +59,26 @@ public class ProductService {
     @Transactional(readOnly = true)
     public StockGet.Response getStock(StockGet.Request req) {
         Product product = findProductOrThrow(req.getProductId());
-
         return StockGet.Response.from(product);
     }
 
     @Transactional
     public StockUpdate.Response increaseStock(StockUpdate.Request req){
         Product product = findProductOrThrow(req.getProductId());
-
         product.setStock(product.getStock() + req.getQuantity());
-
         return StockUpdate.Response.from(product);
     }
 
     @Transactional
     public StockUpdate.Response decreaseStock(StockUpdate.Request req){
         Product product = findProductOrThrow(req.getProductId());
-
         int newStock = product.getStock() - req.getQuantity();
         if (newStock < 0){
             throw new ProductException(STOCK_UNDERFLOW);
         }
-
         product.setStock(newStock);
         return StockUpdate.Response.from(product);
     }
-
 
     private ProductStatus parseProductStatus(String statusStr) {
         try {
@@ -103,16 +91,6 @@ public class ProductService {
     private Product findProductOrThrow(Long productId) {
         return productRepository.findById(productId)
                 .orElseThrow(() -> new ProductException(PRODUCT_NOT_FOUND));
-    }
-
-    private Category findCategoryOrThrow(String categoryIdStr) {
-        try {
-            Long categoryId = Long.parseLong(categoryIdStr);
-            return categoryRepository.findById(categoryId)
-                    .orElseThrow(() -> new ProductException(INVALID_CATEGORY));
-        } catch (NumberFormatException e) {
-            throw new ProductException(INVALID_CATEGORY);
-        }
     }
 
     private void validateOwnership(Product product, User user) {
