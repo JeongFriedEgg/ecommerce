@@ -11,6 +11,8 @@ import com.market.ecommerce.product.type.ProductStatus;
 import com.market.ecommerce.user.domain.User;
 import com.market.ecommerce.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -57,6 +59,18 @@ public class ProductService {
         validateOwnership(product, user);
 
         productRepository.delete(product);
+    }
+
+    @Transactional(readOnly = true)
+    public ProductDetail.Response getProductDetail(Long productId){
+        Product product = findProductOrThrow(productId);
+        return ProductDetail.Response.from(product);
+    }
+
+    @Transactional(readOnly = true)
+    public Page<ProductConditionSearch.Response> getProductList(ProductConditionSearch.Request req, Pageable pageable) {
+        return productRepository.search(req, pageable)
+                .map(ProductConditionSearch.Response::from);
     }
 
     @Transactional(readOnly = true)
