@@ -4,9 +4,7 @@ import com.market.ecommerce.exception.product.ProductException;
 import com.market.ecommerce.exception.user.UserException;
 import com.market.ecommerce.product.domain.Category;
 import com.market.ecommerce.product.domain.Product;
-import com.market.ecommerce.product.dto.ProductDelete;
-import com.market.ecommerce.product.dto.ProductRegister;
-import com.market.ecommerce.product.dto.ProductUpdate;
+import com.market.ecommerce.product.dto.*;
 import com.market.ecommerce.product.repository.CategoryRepository;
 import com.market.ecommerce.product.repository.ProductRepository;
 import com.market.ecommerce.product.type.ProductStatus;
@@ -29,8 +27,8 @@ public class ProductService {
 
     @Transactional
     public ProductRegister.Response registerProduct(ProductRegister.Request req) {
-        User user = getUserOrThrow(req.getUserId());
-        Category category = getCategoryOrThrow(req.getCategory());
+        User user = findUserOrThrow(req.getUserId());
+        Category category = findCategoryOrThrow(req.getCategory());
         ProductStatus status = parseProductStatus(req.getStatus());
 
         Product product = Product.create(user, category, req, status);
@@ -41,11 +39,11 @@ public class ProductService {
 
     @Transactional
     public ProductUpdate.Response updateProduct(ProductUpdate.Request req) {
-        Product product = getProductOrThrow(req.getProductId());
-        User user = getUserOrThrow(req.getUserId());
+        Product product = findProductOrThrow(req.getProductId());
+        User user = findUserOrThrow(req.getUserId());
         validateOwnership(product, user);
 
-        Category category = getCategoryOrThrow(req.getCategory());
+        Category category = findCategoryOrThrow(req.getCategory());
         ProductStatus status = parseProductStatus(req.getStatus());
 
         product.update(req, category, status);
@@ -54,13 +52,41 @@ public class ProductService {
 
     @Transactional
     public void deleteProduct(ProductDelete req) {
-        Product product = getProductOrThrow(req.getProductId());
-        User user = getUserOrThrow(req.getUserId());
+        Product product = findProductOrThrow(req.getProductId());
+        User user = findUserOrThrow(req.getUserId());
         validateOwnership(product, user);
 
         productRepository.delete(product);
     }
 
+    @Transactional(readOnly = true)
+    public StockGet.Response getStock(StockGet.Request req) {
+        Product product = findProductOrThrow(req.getProductId());
+
+        return StockGet.Response.from(product);
+    }
+
+    @Transactional
+    public StockUpdate.Response increaseStock(StockUpdate.Request req){
+        Product product = findProductOrThrow(req.getProductId());
+
+        product.setStock(product.getStock() + req.getQuantity());
+
+        return StockUpdate.Response.from(product);
+    }
+
+    @Transactional
+    public StockUpdate.Response decreaseStock(StockUpdate.Request req){
+        Product product = findProductOrThrow(req.getProductId());
+
+        int newStock = product.getStock() - req.getQuantity();
+        if (newStock < 0){
+            throw new ProductException(STOCK_UNDERFLOW);
+        }
+
+        product.setStock(newStock);
+        return StockUpdate.Response.from(product);
+    }
 
 
     private ProductStatus parseProductStatus(String statusStr) {
@@ -71,17 +97,17 @@ public class ProductService {
         }
     }
 
-    private User getUserOrThrow(String userId) {
+    private User findUserOrThrow(String userId) {
         return userRepository.findByUserId(userId)
                 .orElseThrow(() -> new UserException(USER_NOT_FOUND));
     }
 
-    private Product getProductOrThrow(Long productId) {
+    private Product findProductOrThrow(Long productId) {
         return productRepository.findById(productId)
                 .orElseThrow(() -> new ProductException(PRODUCT_NOT_FOUND));
     }
 
-    private Category getCategoryOrThrow(String categoryIdStr) {
+    private Category findCategoryOrThrow(String categoryIdStr) {
         try {
             Long categoryId = Long.parseLong(categoryIdStr);
             return categoryRepository.findById(categoryId)
