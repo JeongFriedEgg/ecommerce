@@ -2,6 +2,7 @@ package com.market.ecommerce.user.service;
 
 import com.market.ecommerce.exception.user.MultiUserException;
 import com.market.ecommerce.exception.user.UserErrorCode;
+import com.market.ecommerce.exception.user.UserException;
 import com.market.ecommerce.user.domain.User;
 import com.market.ecommerce.user.dto.SignUp;
 import com.market.ecommerce.user.repository.UserRepository;
@@ -11,6 +12,8 @@ import org.springframework.stereotype.Service;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+
+import static com.market.ecommerce.exception.user.UserErrorCode.USER_NOT_FOUND;
 
 @Service
 @RequiredArgsConstructor
@@ -55,5 +58,10 @@ public class UserService {
         }
 
         return errorCodes;
+    }
+
+    public User findUserOrThrow(String userId) {
+        return userRepository.findByUserId(userId)
+                .orElseThrow(() -> new UserException(USER_NOT_FOUND));
     }
 }

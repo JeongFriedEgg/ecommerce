@@ -1,5 +1,6 @@
 package com.market.ecommerce.product.controller;
 
+import com.market.ecommerce.product.application.ProductApplication;
 import com.market.ecommerce.product.dto.*;
 import com.market.ecommerce.product.service.ProductService;
 import lombok.RequiredArgsConstructor;
@@ -17,12 +18,13 @@ import org.springframework.web.bind.annotation.*;
 public class ProductController {
 
     private final ProductService productService;
+    private final ProductApplication productApplication;
 
     @PostMapping("/register")
     public ResponseEntity<ProductRegister.Response> registerProduct(
             @RequestBody ProductRegister.Request req
     ){
-        ProductRegister.Response res = productService.registerProduct(req);
+        ProductRegister.Response res = productApplication.registerProduct(req);
 
         return ResponseEntity
                 .status(HttpStatus.CREATED)
@@ -33,7 +35,7 @@ public class ProductController {
     public ResponseEntity<ProductUpdate.Response> updateProduct(
             @RequestBody ProductUpdate.Request req
     ){
-        ProductUpdate.Response res = productService.updateProduct(req);
+        ProductUpdate.Response res = productApplication.updateProduct(req);
         return ResponseEntity.ok(res);
     }
 
@@ -41,7 +43,7 @@ public class ProductController {
     public ResponseEntity<Void> deleteProduct(
             @RequestBody ProductDelete req
     ){
-        productService.deleteProduct(req);
+        productApplication.deleteProduct(req);
         return ResponseEntity.noContent().build();
     }
 
