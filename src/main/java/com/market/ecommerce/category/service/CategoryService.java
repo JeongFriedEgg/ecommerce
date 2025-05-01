@@ -2,11 +2,12 @@ package com.market.ecommerce.category.service;
 
 import com.market.ecommerce.category.domain.Category;
 import com.market.ecommerce.category.repository.CategoryRepository;
-import com.market.ecommerce.exception.product.ProductException;
+import com.market.ecommerce.exception.category.CategoryException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
-import static com.market.ecommerce.exception.product.ProductErrorCode.INVALID_CATEGORY;
+import static com.market.ecommerce.exception.category.CategoryErrorCode.INVALID_CATEGORY;
+
 
 @Service
 @RequiredArgsConstructor
@@ -18,9 +19,9 @@ public class CategoryService {
         try {
             Long categoryId = Long.parseLong(categoryIdStr);
             return categoryRepository.findById(categoryId)
-                    .orElseThrow(() -> new ProductException(INVALID_CATEGORY));
+                    .orElseThrow(() -> new CategoryException(INVALID_CATEGORY));
         } catch (NumberFormatException e) {
-            throw new ProductException(INVALID_CATEGORY);
+            throw new CategoryException(INVALID_CATEGORY);
         }
     }
 }

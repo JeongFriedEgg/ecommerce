@@ -1,5 +1,7 @@
 package com.market.ecommerce.logging;
 
+import com.market.ecommerce.exception.category.CategoryException;
+import com.market.ecommerce.exception.order.OrderException;
 import com.market.ecommerce.exception.product.ProductException;
 import com.market.ecommerce.exception.user.MultiUserException;
 import com.market.ecommerce.exception.user.UserErrorCode;
@@ -30,6 +32,10 @@ public class ExceptionHandlerLoggingAspect {
                 log.error("[UserException 발생] 예외 클래스: {}, 메시지: {}", ex.getClass().getSimpleName(), ex.getMessage(), ex);
             } else if (arg instanceof ProductException ex){
                 log.error("[ProductException 발생] 예외 클래스: {}, 메시지: {}", ex.getClass().getSimpleName(), ex.getMessage(), ex);
+            } else if (arg instanceof OrderException ex){
+                log.error("[OrderException 발생] 예외 클래스: {}, 메시지: {}", ex.getClass().getSimpleName(), ex.getMessage(), ex);
+            } else if (arg instanceof CategoryException ex){
+                log.error("[CategoryException 발생] 예외 클래스: {}, 메시지: {}", ex.getClass().getSimpleName(), ex.getMessage(), ex);
             } else if (arg instanceof Exception ex) {
                 log.error("[ExceptionHandler 동작] 예외 클래스: {}, 메시지: {}", ex.getClass().getSimpleName(), ex.getMessage(), ex);
             }
