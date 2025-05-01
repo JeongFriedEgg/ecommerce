@@ -17,8 +17,8 @@ public class StockGet {
         private Long productId;
         private Integer stock;
 
-        public static StockGet.Response from(Product product) {
-            return StockGet.Response.builder()
+        public static Response from(Product product) {
+            return Response.builder()
                     .productId(product.getId())
                     .stock(product.getStock())
                     .build();

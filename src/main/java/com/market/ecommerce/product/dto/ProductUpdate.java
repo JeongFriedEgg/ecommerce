@@ -29,8 +29,8 @@ public class ProductUpdate {
         private String name;
         private String updatedDate;
 
-        public static ProductUpdate.Response from(Product product) {
-            return ProductUpdate.Response.builder()
+        public static Response from(Product product) {
+            return Response.builder()
                     .productId(product.getId())
                     .name(product.getName())
                     .updatedDate(product.getUpdatedAt().toString())

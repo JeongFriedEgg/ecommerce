@@ -18,7 +18,7 @@ public class StockUpdate {
         private Long productId;
         private Integer stock;
 
-        public static StockUpdate.Response from(Product product) {
+        public static Response from(Product product) {
             return Response.builder()
                     .productId(product.getId())
                     .stock(product.getStock())
