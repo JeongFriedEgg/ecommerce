@@ -21,20 +21,17 @@ public class SellerService {
     private final SignUpMapper signUpMapper;
     private final BCryptPasswordEncoder bCryptPasswordEncoder;
 
-    public SignUp.Response signUp(SignUp.Request request) {
-        SignUp.SellerRequest req = (SignUp.SellerRequest) request;
-        String username = req.getId();
-        String email = req.getEmail();
-        String phoneNumber = req.getPhoneNumber();
+    public void checkUsernameDuplication(String username) {
+        Optional<Seller> existing = sellerRepository.findByUsername(username);
+        if (existing.isPresent()) {
+            throw new UserException(USERNAME_ALREADY_EXISTS);
+        }
+    }
 
-        Optional<Seller> existingSeller = sellerRepository
-                .findByUsernameOrEmailOrPhoneNumber(username,email,phoneNumber);
-
-        if (existingSeller.isPresent()) {
-            Seller seller = existingSeller.get();
-            if (seller.getUsername().equals(username)) {
-                throw new UserException(USERNAME_ALREADY_EXISTS);
-            }
+    public void checkEmailOrPhoneDuplication(String email, String phoneNumber) {
+        Optional<Seller> existing = sellerRepository.findByEmailOrPhoneNumber(email, phoneNumber);
+        if (existing.isPresent()) {
+            Seller seller = existing.get();
             if (seller.getEmail().equals(email)) {
                 throw new UserException(EMAIL_ALREADY_EXISTS);
             }
@@ -42,7 +39,9 @@ public class SellerService {
                 throw new UserException(PHONE_NUMBER_ALREADY_EXISTS);
             }
         }
+    }
 
+    public SignUp.Response register(SignUp.SellerRequest req) {
         Seller seller = signUpMapper.toSellerEntity(req, bCryptPasswordEncoder);
         sellerRepository.save(seller);
 

@@ -11,5 +11,5 @@ public interface SellerRepository extends JpaRepository<Seller, Long> {
 
     Optional<Seller> findByUsername(String username);
 
-    Optional<Seller> findByUsernameOrEmailOrPhoneNumber(String username, String email, String phoneNumber);
+    Optional<Seller> findByEmailOrPhoneNumber(String email, String phoneNumber);
 }

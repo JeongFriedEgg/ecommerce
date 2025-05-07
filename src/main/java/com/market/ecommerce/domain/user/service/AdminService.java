@@ -21,20 +21,17 @@ public class AdminService {
     private final SignUpMapper signUpMapper;
     private final BCryptPasswordEncoder bCryptPasswordEncoder;
 
-    public SignUp.Response signUp(SignUp.Request request) {
-        SignUp.AdminRequest req = (SignUp.AdminRequest) request;
-        String username = req.getId();
-        String email = req.getEmail();
-        String phoneNumber = req.getPhoneNumber();
+    public void checkUsernameDuplication(String username) {
+        Optional<Admin> existing = adminRepository.findByUsername(username);
+        if (existing.isPresent()) {
+            throw new UserException(USERNAME_ALREADY_EXISTS);
+        }
+    }
 
-        Optional<Admin> existingAdmin = adminRepository
-                .findByUsernameOrEmailOrPhoneNumber(username,email,phoneNumber);
-
-        if (existingAdmin.isPresent()) {
-            Admin admin = existingAdmin.get();
-            if (admin.getUsername().equals(username)) {
-                throw new UserException(USERNAME_ALREADY_EXISTS);
-            }
+    public void checkEmailOrPhoneNumberDuplication(String email, String phoneNumber) {
+        Optional<Admin> existing = adminRepository.findByEmailOrPhoneNumber(email, phoneNumber);
+        if (existing.isPresent()) {
+            Admin admin = existing.get();
             if (admin.getEmail().equals(email)) {
                 throw new UserException(EMAIL_ALREADY_EXISTS);
             }
@@ -42,7 +39,9 @@ public class AdminService {
                 throw new UserException(PHONE_NUMBER_ALREADY_EXISTS);
             }
         }
+    }
 
+    public SignUp.Response register(SignUp.AdminRequest req) {
         Admin admin = signUpMapper.toAdminEntity(req, bCryptPasswordEncoder);
         adminRepository.save(admin);
 

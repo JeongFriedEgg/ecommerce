@@ -1,7 +1,7 @@
 package com.market.ecommerce.domain.user.controller;
 
+import com.market.ecommerce.domain.user.application.SignUpApplication;
 import com.market.ecommerce.domain.user.dto.SignUp;
-import com.market.ecommerce.domain.user.service.SellerService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -15,12 +15,12 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/seller")
 public class SellerController {
 
-    private final SellerService sellerService;
+    private final SignUpApplication signUpApplication;
 
     @PostMapping("/signup")
     public ResponseEntity<SignUp.Response> signUp(
             @RequestBody SignUp.SellerRequest req) {
-        SignUp.Response res = sellerService.signUp(req);
+        SignUp.Response res = signUpApplication.signUpSeller(req);
 
         return ResponseEntity
                 .status(HttpStatus.CREATED)
