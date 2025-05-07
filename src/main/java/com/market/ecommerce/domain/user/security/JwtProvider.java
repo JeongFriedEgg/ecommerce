@@ -1,4 +1,4 @@
-package com.market.ecommerce.domain.user.util;
+package com.market.ecommerce.domain.user.security;
 
 import io.jsonwebtoken.Jwts;
 import org.springframework.beans.factory.annotation.Value;
@@ -10,12 +10,12 @@ import java.nio.charset.StandardCharsets;
 import java.util.Date;
 
 @Component
-public class JwtUtil {
+public class JwtProvider {
 
 
     private SecretKey secretKey;
 
-    public JwtUtil(@Value("${jwt.secret-key}") String secret) {
+    public JwtProvider(@Value("${jwt.secret-key}") String secret) {
         secretKey = new SecretKeySpec(secret.getBytes(StandardCharsets.UTF_8),
                 Jwts.SIG.HS256.key().build().getAlgorithm());
     }

@@ -1,7 +1,8 @@
 package com.market.ecommerce.common.config;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.market.ecommerce.domain.user.security.LoginFilter;
-import com.market.ecommerce.domain.user.util.JwtUtil;
+import com.market.ecommerce.domain.user.security.JwtProvider;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -20,7 +21,12 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 public class SecurityConfig {
 
     private final AuthenticationConfiguration authenticationConfiguration;
-    private final JwtUtil jwtUtil;
+    private final JwtProvider jwtProvider;
+
+    @Bean
+    public ObjectMapper objectMapper() {
+        return new ObjectMapper();
+    }
 
     @Bean
     public AuthenticationManager authenticationManager(AuthenticationConfiguration configuration)
@@ -50,7 +56,7 @@ public class SecurityConfig {
                         .anyRequest().authenticated());
 
         http
-                .addFilterAt(new LoginFilter(authenticationManager(authenticationConfiguration),jwtUtil),
+                .addFilterAt(new LoginFilter(authenticationManager(authenticationConfiguration),jwtProvider, objectMapper()),
                         UsernamePasswordAuthenticationFilter.class);
 
         http
