@@ -47,4 +47,9 @@ public class SellerService {
 
         return SignUp.Response.fromSellerEntity(seller);
     }
+
+    public Seller getSellerById(String sellerId) {
+        return sellerRepository.findByUsername(sellerId)
+                .orElseThrow(() -> new UserException(USER_NOT_FOUND));
+    }
 }
