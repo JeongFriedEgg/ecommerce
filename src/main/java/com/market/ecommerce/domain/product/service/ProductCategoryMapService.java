@@ -25,4 +25,10 @@ public class ProductCategoryMapService {
                 .toList();
         productCategoryMapRepository.saveAll(mappings);
     }
+
+    public void remapCategoriesToProduct(Product product, List<Category> categories) {
+        productCategoryMapRepository.deleteByProductId(product);
+
+        mapCategoriesToProduct(product, categories);
+    }
 }

@@ -55,4 +55,11 @@ public class Product {
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
+
+    public void updateInfo(String title, String description, int price, int stock) {
+        this.title = title;
+        this.description = description;
+        this.price = price;
+        this.stock = stock;
+    }
 }
