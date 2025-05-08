@@ -31,4 +31,8 @@ public class ProductCategoryMapService {
 
         mapCategoriesToProduct(product, categories);
     }
+
+    public void delete(Product product) {
+        productCategoryMapRepository.deleteByProductId(product);
+    }
 }

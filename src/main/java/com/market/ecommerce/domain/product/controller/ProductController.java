@@ -1,6 +1,7 @@
 package com.market.ecommerce.domain.product.controller;
 
 import com.market.ecommerce.domain.product.application.ProductApplication;
+import com.market.ecommerce.domain.product.dto.ProductDelete;
 import com.market.ecommerce.domain.product.dto.ProductRegister;
 import com.market.ecommerce.domain.product.dto.ProductUpdate;
 import com.market.ecommerce.domain.user.dto.CustomUserDetails;
@@ -45,5 +46,15 @@ public class ProductController {
         return ResponseEntity
                 .status(HttpStatus.OK)
                 .body(res);
+    }
+
+    @DeleteMapping
+    public ResponseEntity<Void> deleteProduct(
+            @RequestBody ProductDelete.Request req,
+            @AuthenticationPrincipal CustomUserDetails userDetails
+    ){
+        String username = userDetails.getUsername();
+        productApplication.deleteProduct(req, username);
+        return ResponseEntity.noContent().build();
     }
 }

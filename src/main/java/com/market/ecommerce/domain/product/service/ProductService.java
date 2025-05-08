@@ -1,5 +1,6 @@
 package com.market.ecommerce.domain.product.service;
 
+import com.market.ecommerce.domain.product.dto.ProductDelete;
 import com.market.ecommerce.domain.product.dto.ProductRegister;
 import com.market.ecommerce.domain.product.dto.ProductUpdate;
 import com.market.ecommerce.domain.product.entity.Product;
@@ -36,5 +37,20 @@ public class ProductService {
         product.updateInfo(req.getTitle(), req.getDescription(), req.getPrice(), req.getStock());
 
         return product;
+    }
+
+    public Product findProductById(Long productId, Seller seller) {
+        Product product = productRepository.findById(productId)
+                .orElseThrow(() -> new ProductException(PRODUCT_NOT_FOUND));
+
+        if (!product.getSellerId().equals(seller)) {
+            throw new ProductException(UNAUTHORIZED_PRODUCT_ACCESS);
+        }
+
+        return product;
+    }
+
+    public void delete(Product product) {
+        productRepository.delete(product);
     }
 }

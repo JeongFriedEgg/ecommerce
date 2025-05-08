@@ -3,6 +3,7 @@ package com.market.ecommerce.domain.product.application;
 import com.market.ecommerce.domain.category.entity.Category;
 import com.market.ecommerce.domain.category.exception.CategoryException;
 import com.market.ecommerce.domain.category.service.CategoryService;
+import com.market.ecommerce.domain.product.dto.ProductDelete;
 import com.market.ecommerce.domain.product.dto.ProductRegister;
 import com.market.ecommerce.domain.product.dto.ProductUpdate;
 import com.market.ecommerce.domain.product.entity.Product;
@@ -53,5 +54,17 @@ public class ProductApplication {
         productCategoryMapService.remapCategoriesToProduct(updatedProduct, categories);
 
         return ProductUpdate.Response.fromProductEntity(updatedProduct);
+    }
+
+    @Transactional(rollbackFor = {UserException.class, ProductException.class})
+    public void deleteProduct(ProductDelete.Request req, String username) {
+
+        Seller seller = sellerService.findSellerByUsername(username);
+
+        Product product = productService.findProductById(req.getId(), seller);
+
+        productCategoryMapService.delete(product);
+
+        productService.delete(product);
     }
 }
