@@ -8,7 +8,7 @@ import lombok.Getter;
 
 import java.util.List;
 
-public class RegisterProduct {
+public class ProductRegister {
 
     @Getter
     @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)

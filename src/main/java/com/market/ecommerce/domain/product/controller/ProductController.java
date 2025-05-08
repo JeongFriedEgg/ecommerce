@@ -1,7 +1,7 @@
 package com.market.ecommerce.domain.product.controller;
 
-import com.market.ecommerce.domain.product.application.RegisterProductApplication;
-import com.market.ecommerce.domain.product.dto.RegisterProduct;
+import com.market.ecommerce.domain.product.application.ProductApplication;
+import com.market.ecommerce.domain.product.dto.ProductRegister;
 import com.market.ecommerce.domain.user.dto.CustomUserDetails;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -19,17 +19,17 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/product")
 public class ProductController {
 
-    private final RegisterProductApplication registerProductApplication;
+    private final ProductApplication productApplication;
 
     @PostMapping
-    public ResponseEntity<RegisterProduct.Response> registerProduct(
-            @RequestBody RegisterProduct.Request req,
+    public ResponseEntity<ProductRegister.Response> registerProduct(
+            @RequestBody ProductRegister.Request req,
             @AuthenticationPrincipal CustomUserDetails userDetails
             ){
         String username = userDetails.getUsername();
 
-        RegisterProduct.Response res =
-                registerProductApplication.registerProduct(req, username);
+        ProductRegister.Response res =
+                productApplication.registerProduct(req, username);
         return ResponseEntity
                 .status(HttpStatus.CREATED)
                 .body(res);

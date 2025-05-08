@@ -3,7 +3,7 @@ package com.market.ecommerce.domain.product.application;
 import com.market.ecommerce.domain.category.entity.Category;
 import com.market.ecommerce.domain.category.exception.CategoryException;
 import com.market.ecommerce.domain.category.service.CategoryService;
-import com.market.ecommerce.domain.product.dto.RegisterProduct;
+import com.market.ecommerce.domain.product.dto.ProductRegister;
 import com.market.ecommerce.domain.product.entity.Product;
 import com.market.ecommerce.domain.product.service.ProductCategoryMapService;
 import com.market.ecommerce.domain.product.service.ProductService;
@@ -18,7 +18,7 @@ import java.util.List;
 
 @Service
 @RequiredArgsConstructor
-public class RegisterProductApplication {
+public class ProductApplication {
 
     private final SellerService sellerService;
     private final CategoryService categoryService;
@@ -26,16 +26,16 @@ public class RegisterProductApplication {
     private final ProductCategoryMapService productCategoryMapService;
 
     @Transactional(rollbackFor = {UserException.class, CategoryException.class})
-    public RegisterProduct.Response registerProduct(RegisterProduct.Request req, String username){
+    public ProductRegister.Response registerProduct(ProductRegister.Request req, String username){
 
-        Seller seller = sellerService.getSellerById(username);
+        Seller seller = sellerService.findSellerByUsername(username);
 
-        List<Category> categories = categoryService.validateCategoryNamesExist(req.getCategories());
+        List<Category> categories = categoryService.validateCategoriesExist(req.getCategories());
 
-        Product product = productService.registerProduct(req, seller);
+        Product product = productService.register(req, seller);
 
-        productCategoryMapService.saveProductCategoryMappings(product, categories);
+        productCategoryMapService.mapCategoriesToProduct(product, categories);
 
-        return RegisterProduct.Response.fromProductEntity(product);
+        return ProductRegister.Response.fromProductEntity(product);
     }
 }

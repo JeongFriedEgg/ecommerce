@@ -15,7 +15,7 @@ public class ProductCategoryMapService {
 
     private final ProductCategoryMapRepository productCategoryMapRepository;
 
-    public void saveProductCategoryMappings(Product product, List<Category> categories) {
+    public void mapCategoriesToProduct(Product product, List<Category> categories) {
         List<ProductCategoryMap> mappings = categories.stream()
                 .map(category -> ProductCategoryMap.builder()
                         .productId(product)

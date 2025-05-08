@@ -16,7 +16,7 @@ public class CategoryService {
 
     private final CategoryRepository categoryRepository;
 
-    public List<Category> validateCategoryNamesExist(List<String> categoryNames) {
+    public List<Category> validateCategoriesExist(List<String> categoryNames) {
         List<Category> categories = categoryRepository.findByNameIn(categoryNames);
 
         List<String> foundNames = categories.stream()
