@@ -1,6 +1,7 @@
 package com.market.ecommerce.domain.product.entity;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.market.ecommerce.domain.category.entity.Category;
 import com.market.ecommerce.domain.product.type.ProductType;
 import com.market.ecommerce.domain.user.entity.impl.Seller;
 import jakarta.persistence.*;
@@ -10,6 +11,8 @@ import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.LocalDateTime;
+import java.util.HashSet;
+import java.util.Set;
 
 @Entity
 @Table(name = "product")
@@ -28,6 +31,14 @@ public class Product {
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "seller_id", nullable = false)
     private Seller sellerId;
+
+    @ManyToMany
+    @JoinTable(
+            name = "product_category_map",
+            joinColumns = @JoinColumn(name = "product_id"),
+            inverseJoinColumns = @JoinColumn(name = "category_id")
+    )
+    private Set<Category> categories = new HashSet<>();
 
     @Column(nullable = false)
     private String title;
@@ -56,7 +67,8 @@ public class Product {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
-    public void updateInfo(String title, String description, int price, int stock) {
+    public void updateInfo(Set<Category> categories, String title, String description, int price, int stock) {
+        this.categories = categories;
         this.title = title;
         this.description = description;
         this.price = price;

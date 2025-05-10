@@ -8,7 +8,6 @@ import com.market.ecommerce.domain.product.dto.ProductRegister;
 import com.market.ecommerce.domain.product.dto.ProductUpdate;
 import com.market.ecommerce.domain.product.entity.Product;
 import com.market.ecommerce.domain.product.exception.ProductException;
-import com.market.ecommerce.domain.product.service.ProductCategoryMapService;
 import com.market.ecommerce.domain.product.service.ProductService;
 import com.market.ecommerce.domain.user.entity.impl.Seller;
 import com.market.ecommerce.domain.user.exception.UserException;
@@ -17,7 +16,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
 import java.util.Set;
 
 @Service
@@ -27,7 +25,6 @@ public class ProductApplication {
     private final SellerService sellerService;
     private final CategoryService categoryService;
     private final ProductService productService;
-    private final ProductCategoryMapService productCategoryMapService;
 
     @Transactional(rollbackFor = {UserException.class, CategoryException.class})
     public ProductRegister.Response registerProduct(ProductRegister.Request req, String username){
@@ -36,9 +33,7 @@ public class ProductApplication {
 
         Set<Category> categories = categoryService.validateCategoriesExist(req.getCategories());
 
-        Product product = productService.register(req, seller);
-
-        productCategoryMapService.mapCategoriesToProduct(product, categories);
+        Product product = productService.register(req, seller, categories);
 
         return ProductRegister.Response.fromProductEntity(product);
     }
@@ -50,9 +45,7 @@ public class ProductApplication {
 
         Set<Category> categories = categoryService.validateCategoriesExist(req.getCategories());
 
-        Product updatedProduct = productService.update(req, seller);
-
-        productCategoryMapService.remapCategoriesToProduct(updatedProduct, categories);
+        Product updatedProduct = productService.update(req, seller, categories);
 
         return ProductUpdate.Response.fromProductEntity(updatedProduct);
     }
@@ -63,8 +56,6 @@ public class ProductApplication {
         Seller seller = sellerService.findSellerByUsername(username);
 
         Product product = productService.findProductById(req.getId(), seller);
-
-        productCategoryMapService.delete(product);
 
         productService.delete(product);
     }
