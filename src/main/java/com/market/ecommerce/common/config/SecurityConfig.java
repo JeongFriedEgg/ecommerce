@@ -1,6 +1,7 @@
 package com.market.ecommerce.common.config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.market.ecommerce.domain.user.security.JwtFilter;
 import com.market.ecommerce.domain.user.security.LoginFilter;
 import com.market.ecommerce.domain.user.security.JwtProvider;
 import lombok.RequiredArgsConstructor;
@@ -53,9 +54,12 @@ public class SecurityConfig {
                                 "/seller/signup",
                                 "/admin/signup"
                         ).permitAll()
+                        .requestMatchers("/product/**").hasRole("SELLER")
                         .anyRequest().authenticated());
 
         http
+                .addFilterBefore(new JwtFilter(jwtProvider), UsernamePasswordAuthenticationFilter.class)
+
                 .addFilterAt(new LoginFilter(authenticationManager(authenticationConfiguration),jwtProvider, objectMapper()),
                         UsernamePasswordAuthenticationFilter.class);
 

@@ -11,4 +11,5 @@ public class ErrorResponse {
     private int status;
     private String code;
     private String message;
+    private String detail;
 }

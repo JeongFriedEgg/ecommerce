@@ -1,7 +1,10 @@
 package com.market.ecommerce.domain.user.security;
 
 import com.market.ecommerce.domain.user.dto.CustomUserDetails;
+import com.market.ecommerce.domain.user.entity.User;
+import com.market.ecommerce.domain.user.entity.impl.Admin;
 import com.market.ecommerce.domain.user.entity.impl.Customer;
+import com.market.ecommerce.domain.user.entity.impl.Seller;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -38,12 +41,16 @@ public class JwtFilter extends OncePerRequestFilter {
 
         String username = jwtProvider.getUsername(token);
         String role = jwtProvider.getRole(token);
-        log.info("role : {}", role);
 
-        CustomUserDetails customUserDetails = new CustomUserDetails(
-                Customer.builder()
-                        .username(username)
-                        .build());
+        User user = null;
+        if (role.equals("ROLE_SELLER")) {
+            user = Seller.builder().username(username).build();
+        } else if (role.equals("ROLE_ADMIN")) {
+            user = Admin.builder().username(username).build();
+        } else if (role.equals("ROLE_CUSTOMER")){
+            user = Customer.builder().username(username).build();
+        }
+        CustomUserDetails customUserDetails = new CustomUserDetails(user);
 
         Authentication authToken = new UsernamePasswordAuthenticationToken(customUserDetails,
                 null, customUserDetails.getAuthorities());

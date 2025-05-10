@@ -61,7 +61,7 @@ public class LoginFilter extends UsernamePasswordAuthenticationFilter {
         String token = jwtProvider.createJwtToken(
                 userDetails.getUsername(),
                 role,
-                60 * 50 * 10L);
+                60 * 60 * 1000L);
 
         LogIn.Response resDto = LogIn.Response.builder()
                 .message("로그인 성공")
