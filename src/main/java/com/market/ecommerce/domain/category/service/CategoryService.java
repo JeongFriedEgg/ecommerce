@@ -4,9 +4,11 @@ import com.market.ecommerce.domain.category.entity.Category;
 import com.market.ecommerce.domain.category.exception.CategoryException;
 import com.market.ecommerce.domain.category.repository.CategoryRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import static com.market.ecommerce.domain.category.exception.CategoryErrorCode.CATEGORY_NOT_FOUND;
 
@@ -16,18 +18,17 @@ public class CategoryService {
 
     private final CategoryRepository categoryRepository;
 
-    public List<Category> validateCategoriesExist(List<String> categoryNames) {
-        List<Category> categories = categoryRepository.findByNameIn(categoryNames);
+    @Cacheable(value = "categoryCache",
+            key = "#categoryNames.stream().sorted().collect(T(java.util.stream.Collectors).joining(','))")
+    public Set<Category> validateCategoriesExist(Set<String> categoryNames) {
+        Set<Category> categories = categoryRepository.findByNameIn(categoryNames);
 
-        List<String> foundNames = categories.stream()
+        Set<String> foundNames = categories.stream()
                 .map(Category::getName)
-                .toList();
+                .collect(Collectors.toSet());
 
-        List<String> notFound = categoryNames.stream()
-                .filter(name -> !foundNames.contains(name))
-                .toList();
 
-        if (!notFound.isEmpty()) {
+        if (foundNames.size() != categoryNames.size()) {
             throw new CategoryException(CATEGORY_NOT_FOUND);
         }
 

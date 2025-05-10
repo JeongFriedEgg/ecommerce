@@ -6,7 +6,7 @@ import com.market.ecommerce.domain.product.entity.Product;
 import lombok.Builder;
 import lombok.Getter;
 
-import java.util.List;
+import java.util.Set;
 
 public class ProductRegister {
 
@@ -17,7 +17,7 @@ public class ProductRegister {
         private String description;
         private int price;
         private int stock;
-        private List<String> categories;
+        private Set<String> categories;
     }
 
     @Getter

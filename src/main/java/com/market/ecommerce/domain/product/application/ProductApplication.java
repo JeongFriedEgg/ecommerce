@@ -18,6 +18,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
@@ -33,7 +34,7 @@ public class ProductApplication {
 
         Seller seller = sellerService.findSellerByUsername(username);
 
-        List<Category> categories = categoryService.validateCategoriesExist(req.getCategories());
+        Set<Category> categories = categoryService.validateCategoriesExist(req.getCategories());
 
         Product product = productService.register(req, seller);
 
@@ -47,7 +48,7 @@ public class ProductApplication {
 
         Seller seller = sellerService.findSellerByUsername(username);
 
-        List<Category> categories = categoryService.validateCategoriesExist(req.getCategories());
+        Set<Category> categories = categoryService.validateCategoriesExist(req.getCategories());
 
         Product updatedProduct = productService.update(req, seller);
 

@@ -8,6 +8,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
@@ -15,7 +16,7 @@ public class ProductCategoryMapService {
 
     private final ProductCategoryMapRepository productCategoryMapRepository;
 
-    public void mapCategoriesToProduct(Product product, List<Category> categories) {
+    public void mapCategoriesToProduct(Product product, Set<Category> categories) {
         List<ProductCategoryMap> mappings = categories.stream()
                 .map(category -> ProductCategoryMap.builder()
                         .productId(product)
@@ -26,7 +27,7 @@ public class ProductCategoryMapService {
         productCategoryMapRepository.saveAll(mappings);
     }
 
-    public void remapCategoriesToProduct(Product product, List<Category> categories) {
+    public void remapCategoriesToProduct(Product product, Set<Category> categories) {
         productCategoryMapRepository.deleteByProductId(product);
 
         mapCategoriesToProduct(product, categories);
