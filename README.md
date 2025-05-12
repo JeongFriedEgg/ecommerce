@@ -99,7 +99,7 @@
   - 결제에 대한 데이터 조회
 
 ## ✅ ERD
-![ERD_revised.jpg](ERD_revised.jpg)
+![ERD_revised2.jpg](ERD_revised2.jpg)
 ### [ERD 설계 링크](https://www.erdcloud.com/d/J9rwTMoJ3f2hoBn3W)
 
 
