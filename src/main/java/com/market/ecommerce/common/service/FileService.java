@@ -29,7 +29,7 @@ public class FileService {
 
     public String uploadImage(MultipartFile multipartFile) {
         String originalFileName = multipartFile.getOriginalFilename();
-        String customFileName = String.format("%s_%s", UUID.randomUUID(), originalFileName);
+        String customFileName = String.format("%s/%s", UUID.randomUUID(), originalFileName);
 
         long contentLength = multipartFile.getSize();
 

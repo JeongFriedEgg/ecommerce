@@ -11,6 +11,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.util.List;
 
 @Slf4j
 @RestController
@@ -22,13 +25,14 @@ public class ProductController {
 
     @PostMapping
     public ResponseEntity<ProductRegister.Response> registerProduct(
-            @RequestBody ProductRegister.Request req,
+            @RequestPart("request") ProductRegister.Request req,
+            @RequestPart("images") List<MultipartFile> imageFiles,
             @AuthenticationPrincipal CustomUserDetails userDetails
     ){
         String username = userDetails.getUsername();
 
         ProductRegister.Response res =
-                productApplication.registerProduct(req, username);
+                productApplication.registerProduct(req, imageFiles, username);
         return ResponseEntity
                 .status(HttpStatus.CREATED)
                 .body(res);
@@ -36,7 +40,9 @@ public class ProductController {
 
     @PutMapping
     public ResponseEntity<ProductUpdate.Response> updateProduct(
-            @RequestBody ProductUpdate.Request req,
+            @RequestPart("request") ProductUpdate.Request req,
+            @RequestPart("delete_images") List<String> deleteImageUrls,
+            @RequestPart("update_images") List<MultipartFile> newImageFiles,
             @AuthenticationPrincipal CustomUserDetails userDetails
     ) {
         String username = userDetails.getUsername();
