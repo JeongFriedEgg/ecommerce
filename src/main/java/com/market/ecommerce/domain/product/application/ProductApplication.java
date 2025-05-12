@@ -78,10 +78,10 @@ public class ProductApplication {
         try {
             updatedProduct = productService.update(req, seller, categories);
 
-            fileService.deleteImages(previousImageUrls);
-
             productImageService.updateImageUrls(updatedProduct, req.getImageOrderInfos(),
                     newImageUrls);
+
+            fileService.deleteImages(previousImageUrls);
         } catch (Exception e) {
             fileService.deleteImages(newImageUrls);
             log.error("상품 수정 처리 중에 예외가 발생하였습니다. : ",e);
