@@ -45,4 +45,8 @@ public class ProductImageService {
 
         productImageRepository.saveAll(productImages);
     }
+
+    public List<String> getImageUrlsByProductId(Long productId) {
+        return productImageRepository.findImageUrlByProductId(productId);
+    }
 }

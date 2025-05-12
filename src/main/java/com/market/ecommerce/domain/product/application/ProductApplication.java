@@ -78,7 +78,18 @@ public class ProductApplication {
 
         Product product = productService.findProductById(req.getId(), seller);
 
+        List<String> imageUrls = productImageService.getImageUrlsByProductId(product.getId());
+
         productService.delete(product);
+
+        fileService.deleteImages(imageUrls);
+
+        /** ProductImage 데이터의 경우, Product 가 삭제될 때, 해당 Product 데이터에 대한
+         *  ProductImage 데이터 또한 자동 삭제.
+         *  MySQL에서 테이블 생성시 ProductImage의 외래키를 다음과 같이 설정함.
+         *
+         *  -> FOREIGN KEY (product_id) REFERENCES product(id) ON DELETE CASCADE
+         *  */
     }
 
     private String extractFileNameFromUrl(String url) {
