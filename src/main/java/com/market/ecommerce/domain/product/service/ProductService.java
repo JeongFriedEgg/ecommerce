@@ -55,7 +55,6 @@ public class ProductService {
 
     @Transactional
     public void delete(Product product) {
-        product.getCategories().clear();
         productRepository.delete(product);
     }
 }

@@ -47,7 +47,7 @@ public class ProductApplication {
 
         List<String> imageUrls = fileService.uploadImages(imageFiles);
 
-        Product product = null;
+        final Product product;
         try {
             product = productService.register(req, seller, categories);
             productImageService.saveImageUrls(product, req.getImageOrderInfos(), imageUrls);
@@ -73,7 +73,7 @@ public class ProductApplication {
 
         List<String> newImageUrls = fileService.uploadImages(newImageFiles);
 
-        Product updatedProduct = null;
+        final Product updatedProduct;
 
         try {
             updatedProduct = productService.update(req, seller, categories);
