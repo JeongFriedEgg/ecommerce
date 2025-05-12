@@ -6,6 +6,7 @@ import com.market.ecommerce.domain.product.entity.Product;
 import lombok.Builder;
 import lombok.Getter;
 
+import java.util.List;
 import java.util.Set;
 
 public class ProductUpdate {
@@ -18,6 +19,14 @@ public class ProductUpdate {
         private int price;
         private int stock;
         private Set<String> categories;
+        private List<ImageOrderInfo> imageOrderInfos;
+    }
+
+    @Getter
+    @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
+    public static class ImageOrderInfo implements ImageOrderInfoInterface {
+        private Integer order;
+        private String imageFileName;
     }
 
     @Getter

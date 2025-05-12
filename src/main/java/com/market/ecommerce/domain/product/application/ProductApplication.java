@@ -23,6 +23,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.util.*;
 
 import static com.market.ecommerce.domain.product.exception.ProductErrorCode.PRODUCT_REGISTRATION_FAILED;
+import static com.market.ecommerce.domain.product.exception.ProductErrorCode.PRODUCT_UPDATE_FAILED;
 
 @Slf4j
 @Service
@@ -60,13 +61,32 @@ public class ProductApplication {
     }
 
     @Transactional(rollbackFor = {UserException.class, CategoryException.class, ProductException.class})
-    public ProductUpdate.Response updateProduct(ProductUpdate.Request req, String username) {
+    public ProductUpdate.Response updateProduct(
+            ProductUpdate.Request req, List<MultipartFile> newImageFiles, String username
+    ) {
 
         Seller seller = sellerService.findSellerByUsername(username);
 
         Set<Category> categories = categoryService.validateCategoriesExist(req.getCategories());
 
-        Product updatedProduct = productService.update(req, seller, categories);
+        List<String> previousImageUrls = productImageService.getImageUrlsByProductId(req.getId());
+
+        List<String> newImageUrls = fileService.uploadImages(newImageFiles);
+
+        Product updatedProduct = null;
+
+        try {
+            updatedProduct = productService.update(req, seller, categories);
+
+            fileService.deleteImages(previousImageUrls);
+
+            productImageService.updateImageUrls(updatedProduct, req.getImageOrderInfos(),
+                    newImageUrls);
+        } catch (Exception e) {
+            fileService.deleteImages(newImageUrls);
+            log.error("상품 수정 처리 중에 예외가 발생하였습니다. : ",e);
+            throw new ProductException(PRODUCT_UPDATE_FAILED);
+        }
 
         return ProductUpdate.Response.fromProductEntity(updatedProduct);
     }
@@ -90,11 +110,5 @@ public class ProductApplication {
          *
          *  -> FOREIGN KEY (product_id) REFERENCES product(id) ON DELETE CASCADE
          *  */
-    }
-
-    private String extractFileNameFromUrl(String url) {
-        String s3Path = url.substring(url.lastIndexOf('/') + 1);
-        String fileName = s3Path.substring(s3Path.indexOf('_') + 1);
-        return fileName.substring(0, fileName.lastIndexOf('.'));
     }
 }

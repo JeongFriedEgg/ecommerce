@@ -1,6 +1,7 @@
 package com.market.ecommerce.domain.product.service;
 
-import com.market.ecommerce.domain.product.dto.ProductRegister;
+import com.market.ecommerce.domain.product.dto.ImageOrderInfoInterface;
+import com.market.ecommerce.domain.product.dto.ProductUpdate;
 import com.market.ecommerce.domain.product.entity.Product;
 import com.market.ecommerce.domain.product.entity.ProductImage;
 import com.market.ecommerce.domain.product.repository.ProductImageRepository;
@@ -20,9 +21,9 @@ public class ProductImageService {
 
     private final ProductImageRepository productImageRepository;
 
-    public void saveImageUrls(Product product, List<ProductRegister.ImageOrderInfo> imageOrderInfos, List<String> imageUrls) {
+    public <T extends ImageOrderInfoInterface> void saveImageUrls(Product product, List<T> imageOrderInfos, List<String> imageUrls) {
         Map<String, Integer> orderMap = new HashMap<>();
-        for (ProductRegister.ImageOrderInfo imageOrderInfo : imageOrderInfos) {
+        for (T imageOrderInfo : imageOrderInfos) {
             orderMap.put(imageOrderInfo.getImageFileName(), imageOrderInfo.getOrder());
         }
 
@@ -48,5 +49,15 @@ public class ProductImageService {
 
     public List<String> getImageUrlsByProductId(Long productId) {
         return productImageRepository.findImageUrlByProductId(productId);
+    }
+
+    public void updateImageUrls(Product product, List<ProductUpdate.ImageOrderInfo> imageOrderInfos,
+                                List<String> newImageUrls) {
+        deleteImageUrlsByProductId(product.getId());
+        saveImageUrls(product, imageOrderInfos, newImageUrls);
+    }
+
+    private void deleteImageUrlsByProductId(Long productId) {
+        productImageRepository.deleteByProductId(productId);
     }
 }

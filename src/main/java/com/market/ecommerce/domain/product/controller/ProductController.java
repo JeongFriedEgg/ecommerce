@@ -41,14 +41,13 @@ public class ProductController {
     @PutMapping
     public ResponseEntity<ProductUpdate.Response> updateProduct(
             @RequestPart("request") ProductUpdate.Request req,
-            @RequestPart("delete_images") List<String> deleteImageUrls,
             @RequestPart("update_images") List<MultipartFile> newImageFiles,
             @AuthenticationPrincipal CustomUserDetails userDetails
     ) {
         String username = userDetails.getUsername();
 
         ProductUpdate.Response res =
-                productApplication.updateProduct(req, username);
+                productApplication.updateProduct(req, newImageFiles, username);
         return ResponseEntity
                 .status(HttpStatus.OK)
                 .body(res);

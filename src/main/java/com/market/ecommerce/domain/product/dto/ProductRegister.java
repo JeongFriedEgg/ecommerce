@@ -24,7 +24,7 @@ public class ProductRegister {
 
     @Getter
     @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
-    public static class ImageOrderInfo {
+    public static class ImageOrderInfo implements ImageOrderInfoInterface {
         private Integer order;
         private String imageFileName;
     }
