@@ -47,4 +47,9 @@ public class CustomerService {
 
         return SignUp.Response.fromCustomerEntity(customer);
     }
+
+    public void findCustomerByUsername(String customerId) {
+        customerRepository.findByUsername(customerId)
+                .orElseThrow(() -> new UserException(USER_NOT_FOUND));
+    }
 }
