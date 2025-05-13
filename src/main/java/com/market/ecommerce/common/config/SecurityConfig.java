@@ -23,11 +23,7 @@ public class SecurityConfig {
 
     private final AuthenticationConfiguration authenticationConfiguration;
     private final JwtProvider jwtProvider;
-
-    @Bean
-    public ObjectMapper objectMapper() {
-        return new ObjectMapper();
-    }
+    private final ObjectMapper objectMapper;
 
     @Bean
     public AuthenticationManager authenticationManager(AuthenticationConfiguration configuration)
@@ -60,7 +56,7 @@ public class SecurityConfig {
         http
                 .addFilterBefore(new JwtFilter(jwtProvider), UsernamePasswordAuthenticationFilter.class)
 
-                .addFilterAt(new LoginFilter(authenticationManager(authenticationConfiguration),jwtProvider, objectMapper()),
+                .addFilterAt(new LoginFilter(authenticationManager(authenticationConfiguration),jwtProvider, objectMapper),
                         UsernamePasswordAuthenticationFilter.class);
 
         http
