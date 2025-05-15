@@ -2,6 +2,7 @@ package com.market.ecommerce.domain.cart.controller;
 
 import com.market.ecommerce.domain.cart.application.CartApplication;
 import com.market.ecommerce.domain.cart.dto.AddProductToCart;
+import com.market.ecommerce.domain.cart.dto.GetCart;
 import com.market.ecommerce.domain.cart.dto.RemoveProductFromCart;
 import com.market.ecommerce.domain.user.dto.CustomUserDetails;
 import lombok.RequiredArgsConstructor;
@@ -38,6 +39,17 @@ public class CartController {
         String username = userDetails.getUsername();
         cartApplication.removeProductFromCart(req, username);
         return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping
+    public ResponseEntity<GetCart.Response> getCart(
+            @AuthenticationPrincipal CustomUserDetails userDetails
+    ){
+        String username = userDetails.getUsername();
+        GetCart.Response res = cartApplication.getCart(username);
+        return ResponseEntity
+                .status(HttpStatus.OK)
+                .body(res);
     }
 
     @DeleteMapping

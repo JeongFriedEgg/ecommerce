@@ -21,6 +21,15 @@ public class CartService {
     private final RedisClient redisClient;
     private final CartMapper cartMapper;
 
+    public Cart getCart(String customerId) {
+        Cart cart = redisClient.getValue(customerId, Cart.class);
+        return cart != null ? cart : new Cart();
+    }
+
+    public void putCart(Cart cart) {
+        redisClient.putValue(cart.getCustomerId(), cart);
+    }
+
     public Cart addProductToCart(AddProductToCart.Request req, String customerId){
         // 레디스에 고객 아이디로 장바구니 조회
         Cart cart = redisClient.getValue(customerId, Cart.class);
