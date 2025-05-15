@@ -2,13 +2,18 @@ package com.market.ecommerce.domain.cart.service;
 
 import com.market.ecommerce.common.client.redis.RedisClient;
 import com.market.ecommerce.domain.cart.dto.AddProductToCart;
+import com.market.ecommerce.domain.cart.dto.RemoveProductFromCart;
 import com.market.ecommerce.domain.cart.entity.Cart;
+import com.market.ecommerce.domain.cart.exception.CartException;
 import com.market.ecommerce.domain.cart.mapper.CartMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.Optional;
 import java.util.Set;
+
+import static com.market.ecommerce.domain.cart.exception.CartErrorCode.CART_NOT_FOUND;
+import static com.market.ecommerce.domain.cart.exception.CartErrorCode.PRODUCT_NOT_IN_CART;
 
 @Service
 @RequiredArgsConstructor
@@ -44,6 +49,26 @@ public class CartService {
 
         redisClient.putValue(customerId, cart);
         return cart;
+    }
+
+    public void removeProductFromCart(RemoveProductFromCart.Request req, String customerId) {
+        Cart cart = redisClient.getValue(customerId, Cart.class);
+
+        if (cart == null) {
+            throw new CartException(CART_NOT_FOUND);
+        }
+
+        if (cart.getCartItems() == null || cart.getCartItems().isEmpty()) {
+            throw new CartException(PRODUCT_NOT_IN_CART);
+        }
+
+        boolean removed = cart.getCartItems().removeIf(
+                item -> item.getProductId().equals(req.getProductId())
+        );
+
+        if (removed) {
+            redisClient.putValue(customerId, cart);
+        }
     }
 
     public void clearCart(String customerId) {

@@ -1,6 +1,7 @@
 package com.market.ecommerce.domain.cart.application;
 
 import com.market.ecommerce.domain.cart.dto.AddProductToCart;
+import com.market.ecommerce.domain.cart.dto.RemoveProductFromCart;
 import com.market.ecommerce.domain.cart.entity.Cart;
 import com.market.ecommerce.domain.cart.exception.CartException;
 import com.market.ecommerce.domain.cart.service.CartService;
@@ -44,6 +45,18 @@ public class CartApplication {
         Cart cart = cartService.addProductToCart(req, username);
 
         return AddProductToCart.Response.from(cart);
+    }
+
+    public void removeProductFromCart(
+            RemoveProductFromCart.Request req, String username
+    ) {
+        customerService.findCustomerByUsername(username);
+
+        /* 상품 데이터가 판매자의 상품 삭제 요청으로 상품 테이블에서 이미 삭제되었을 수 있다.
+        *  그러나 고객에 대한 장바구니 데이터에는 따로 업데이트를 하지 않기 때문에,
+        *  요청받은 상품 아이디를 이용하여 레디스 저장소에서 삭제해주어야 한다.
+        * */
+        cartService.removeProductFromCart(req, username);
     }
 
     public void clearCart(String username) {

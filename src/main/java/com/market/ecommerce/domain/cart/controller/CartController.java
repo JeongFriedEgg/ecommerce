@@ -2,6 +2,7 @@ package com.market.ecommerce.domain.cart.controller;
 
 import com.market.ecommerce.domain.cart.application.CartApplication;
 import com.market.ecommerce.domain.cart.dto.AddProductToCart;
+import com.market.ecommerce.domain.cart.dto.RemoveProductFromCart;
 import com.market.ecommerce.domain.user.dto.CustomUserDetails;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -27,6 +28,16 @@ public class CartController {
         return ResponseEntity
                 .status(HttpStatus.CREATED)
                 .body(res);
+    }
+
+    @DeleteMapping("/")
+    public ResponseEntity<Void> deleteProductFromCart(
+            @RequestBody RemoveProductFromCart.Request req,
+            @AuthenticationPrincipal CustomUserDetails userDetails
+    ){
+        String username = userDetails.getUsername();
+        cartApplication.removeProductFromCart(req, username);
+        return ResponseEntity.noContent().build();
     }
 
     @DeleteMapping

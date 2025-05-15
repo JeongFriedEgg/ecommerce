@@ -4,6 +4,7 @@ import jakarta.persistence.Id;
 import lombok.*;
 import org.springframework.data.redis.core.RedisHash;
 
+import java.util.HashSet;
 import java.util.Set;
 
 @RedisHash("cart")
@@ -15,7 +16,9 @@ import java.util.Set;
 public class Cart {
     @Id
     private String customerId;
-    private Set<CartItem> cartItems;
+
+    @Builder.Default
+    private Set<CartItem> cartItems = new HashSet<>();
 
     @Getter
     @Setter
