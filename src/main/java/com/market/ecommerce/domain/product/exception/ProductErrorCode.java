@@ -8,6 +8,7 @@ import org.springframework.http.HttpStatus;
 @AllArgsConstructor
 public enum ProductErrorCode {
 
+    PRODUCT_NOT_AVAILABLE(HttpStatus.BAD_REQUEST,"해당 상품은 현재 구매할 수 없습니다."),
     PRODUCT_NOT_FOUND(HttpStatus.NOT_FOUND,"해당 상품을 찾을 수 없습니다."),
     UNAUTHORIZED_PRODUCT_ACCESS(HttpStatus.UNAUTHORIZED,"해당 상품에 대한 권한이 없습니다."),
 

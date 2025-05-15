@@ -4,7 +4,6 @@ import jakarta.persistence.Id;
 import lombok.*;
 import org.springframework.data.redis.core.RedisHash;
 
-import java.time.LocalDateTime;
 import java.util.Set;
 
 @RedisHash("cart")
@@ -15,14 +14,21 @@ import java.util.Set;
 @AllArgsConstructor
 public class Cart {
     @Id
-    private Long customerId;
-    private LocalDateTime createdAt;
-    private LocalDateTime updatedAt;
+    private String customerId;
     private Set<CartItem> cartItems;
 
+    @Getter
+    @Setter
     @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @EqualsAndHashCode(onlyExplicitlyIncluded = true)
     public static class CartItem {
+        @EqualsAndHashCode.Include
         private Long productId;
+        private String title;
+        private String mainImageUrl;
+        private Integer price;
         private Integer quantity;
     }
 }

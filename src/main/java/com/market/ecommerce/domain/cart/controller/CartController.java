@@ -1,13 +1,13 @@
 package com.market.ecommerce.domain.cart.controller;
 
 import com.market.ecommerce.domain.cart.application.CartApplication;
+import com.market.ecommerce.domain.cart.dto.AddProductToCart;
 import com.market.ecommerce.domain.user.dto.CustomUserDetails;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequiredArgsConstructor
@@ -15,6 +15,19 @@ import org.springframework.web.bind.annotation.RestController;
 public class CartController {
 
     private final CartApplication cartApplication;
+
+    @PostMapping
+    public ResponseEntity<AddProductToCart.Response> addProductToCart(
+            @RequestBody AddProductToCart.Request req,
+            @AuthenticationPrincipal CustomUserDetails userDetails
+    ){
+        String username = userDetails.getUsername();
+        AddProductToCart.Response res =
+                cartApplication.addProductToCart(req, username);
+        return ResponseEntity
+                .status(HttpStatus.CREATED)
+                .body(res);
+    }
 
     @DeleteMapping
     public ResponseEntity<Void> clearCart(
