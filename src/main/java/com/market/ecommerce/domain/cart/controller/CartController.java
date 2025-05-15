@@ -32,7 +32,7 @@ public class CartController {
     }
 
     @DeleteMapping("/product")
-    public ResponseEntity<Void> deleteProductFromCart(
+    public ResponseEntity<Void> removeProductFromCart(
             @RequestBody RemoveProductFromCart.Request req,
             @AuthenticationPrincipal CustomUserDetails userDetails
     ){
