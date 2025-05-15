@@ -30,7 +30,7 @@ public class CartController {
                 .body(res);
     }
 
-    @DeleteMapping("/")
+    @DeleteMapping("/product")
     public ResponseEntity<Void> deleteProductFromCart(
             @RequestBody RemoveProductFromCart.Request req,
             @AuthenticationPrincipal CustomUserDetails userDetails
