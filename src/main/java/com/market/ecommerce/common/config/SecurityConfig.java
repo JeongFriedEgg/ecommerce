@@ -46,9 +46,8 @@ public class SecurityConfig {
 
                 .authorizeHttpRequests((auth) -> auth
                         .requestMatchers("/login","/",
-                                "/customer/signup",
-                                "/seller/signup",
-                                "/admin/signup"
+                                "/customer/signup", "/seller/signup", "/admin/signup",
+                                "/widget/**", "/payment/**", "/brandpay/**", "/style.css"
                         ).permitAll()
                         .requestMatchers("/product/**").hasRole("SELLER")
                         .anyRequest().authenticated());
