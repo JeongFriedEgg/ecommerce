@@ -12,10 +12,11 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
 import java.util.Set;
 
-import static com.market.ecommerce.domain.product.exception.ProductErrorCode.PRODUCT_NOT_FOUND;
-import static com.market.ecommerce.domain.product.exception.ProductErrorCode.UNAUTHORIZED_PRODUCT_ACCESS;
+import static com.market.ecommerce.domain.product.exception.ProductErrorCode.*;
+import static com.market.ecommerce.domain.product.type.ProductType.AVAILABLE;
 
 @Service
 @RequiredArgsConstructor
@@ -53,8 +54,29 @@ public class ProductService {
         return product;
     }
 
+    public Product validateProductExists(Long productId) {
+        return productRepository.findById(productId)
+                .orElseThrow(() -> new ProductException(PRODUCT_NOT_FOUND));
+    }
+
+    public void validateProductAvailability(Product product) {
+        if (!product.getStatus().equals(AVAILABLE)) {
+            throw new ProductException(PRODUCT_NOT_AVAILABLE);
+        }
+    }
+
+    public int getStock(Long productId) {
+        Product product = productRepository.findById(productId)
+                .orElseThrow(() -> new ProductException(PRODUCT_NOT_FOUND));
+        return product.getStock();
+    }
+
     @Transactional
     public void delete(Product product) {
         productRepository.delete(product);
+    }
+
+    public List<Product> findAllById(Set<Long> ids) {
+        return productRepository.findAllById(ids);
     }
 }
