@@ -49,7 +49,7 @@ public class SecurityConfig {
                                 "/customer/signup", "/seller/signup", "/admin/signup",
                                 "/widget/**", "/payment/**", "/brandpay/**", "/style.css"
                         ).permitAll()
-                        .requestMatchers("/product/**").hasRole("SELLER")
+                        .requestMatchers("/product/**", "/order/**").hasRole("SELLER")
                         .anyRequest().authenticated());
 
         http
