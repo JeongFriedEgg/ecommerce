@@ -49,7 +49,8 @@ public class SecurityConfig {
                                 "/customer/signup", "/seller/signup", "/admin/signup",
                                 "/widget/**", "/payment/**", "/brandpay/**", "/style.css"
                         ).permitAll()
-                        .requestMatchers("/product/**", "/order/**").hasRole("SELLER")
+                        .requestMatchers("/order/**","/payment/**").hasRole("CUSTOMER")
+                        .requestMatchers("/product/**").hasRole("SELLER")
                         .anyRequest().authenticated());
 
         http
