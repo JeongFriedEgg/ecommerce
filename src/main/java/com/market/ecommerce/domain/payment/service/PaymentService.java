@@ -6,7 +6,8 @@ import com.market.ecommerce.domain.payment.entity.TossPayment;
 import com.market.ecommerce.domain.payment.exception.*;
 import com.market.ecommerce.domain.payment.mapper.TossPaymentMapper;
 import com.market.ecommerce.domain.payment.repository.TossPaymentRepository;
-import com.market.ecommerce.domain.payment.service.request.TossPaymentResponse;
+import com.market.ecommerce.domain.payment.service.request.TossPaymentCancelRequest;
+import com.market.ecommerce.domain.payment.service.response.TossPaymentResponse;
 import com.market.ecommerce.domain.payment.service.request.TossPaymentConfirmRequest;
 import com.market.ecommerce.domain.payment.service.response.TossErrorResponse;
 import lombok.RequiredArgsConstructor;
@@ -38,7 +39,7 @@ public class PaymentService {
     private final TossPaymentMapper tossPaymentMapper;
 
 
-    public void retrievePayment(PaymentConfirm.Request req) {
+    public void getPayment(PaymentConfirm.Request req) {
         String paymentKey = req.getPaymentKey();
         String orderId = req.getOrderId();
         String amount = req.getAmount();
@@ -92,6 +93,43 @@ public class PaymentService {
                 .body(TossPaymentResponse.class);
 
         TossPayment tossPayment = tossPaymentMapper.toEntity(res);
+        tossPaymentRepository.save(tossPayment);
+
+        return res;
+    }
+
+    @Transactional
+    public TossPaymentResponse cancelPayment(String paymentKey, String cancelReason) {
+        TossPaymentCancelRequest cancelRequest = new TossPaymentCancelRequest(cancelReason);
+
+        TossPaymentResponse res = restClient.post()
+                .uri(TOSS_CLIENT_URI + "/{paymentKey}",paymentKey)
+                .header(HttpHeaders.AUTHORIZATION, createAuthorizationHeader())
+                .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+                .header(HttpHeaders.ACCEPT, MediaType.APPLICATION_JSON_VALUE)
+                .body(cancelRequest)
+                .retrieve()
+                .onStatus(HttpStatusCode::is4xxClientError,(request, response) -> {
+                    TossErrorResponse errorResponse = parseClientErrorResponse(response);
+                    TossCancelPaymentErrorCode code = mapTossCancelPaymentErrorCodeToEnum(response.getStatusCode(),errorResponse.getError().getCode());
+                    throw new TossCancelPaymentException(code);
+                })
+                .onStatus(HttpStatusCode::is5xxServerError,(request, response) -> {
+                    TossErrorResponse errorResponse = parseClientErrorResponse(response);
+                    TossCancelPaymentErrorCode code = mapTossCancelPaymentErrorCodeToEnum(response.getStatusCode(),errorResponse.getError().getCode());
+                    throw new TossCancelPaymentException(code);
+                })
+                .body(TossPaymentResponse.class);
+
+        TossPayment tossPayment = tossPaymentRepository.findByPaymentKey(paymentKey)
+                .orElseThrow(() -> new TossPaymentException(TossPaymentErrorCode.NOT_FOUND_PAYMENT));
+
+        tossPayment.setStatus(res.getStatus());
+        if (res.getCancels() != null && !res.getCancels().isEmpty()) {
+            TossPaymentResponse.Cancels firstCancel = res.getCancels().get(0);
+            tossPayment.setCancelAt(firstCancel.getCanceledAt());
+            tossPayment.setCancelReason(firstCancel.getCancelReason());
+        }
         tossPaymentRepository.save(tossPayment);
 
         return res;
@@ -196,6 +234,56 @@ public class PaymentService {
                 default -> TossConfirmPaymentErrorCode.UNKNOWN_PAYMENT_ERROR;
             };
             default -> TossConfirmPaymentErrorCode.UNKNOWN_PAYMENT_ERROR;
+        };
+    }
+
+    private TossCancelPaymentErrorCode mapTossCancelPaymentErrorCodeToEnum(HttpStatusCode status, String tossCode) {
+        return switch (status.value()) {
+            case 400 -> switch (tossCode) {
+                case "ALREADY_CANCELED_PAYMENT" -> TossCancelPaymentErrorCode.ALREADY_CANCELED_PAYMENT;
+                case "INVALID_REFUND_ACCOUNT_INFO" -> TossCancelPaymentErrorCode.INVALID_REFUND_ACCOUNT_INFO;
+                case "EXCEED_CANCEL_AMOUNT_DISCOUNT_AMOUNT" -> TossCancelPaymentErrorCode.EXCEED_CANCEL_AMOUNT_DISCOUNT_AMOUNT;
+                case "INVALID_REQUEST" -> TossCancelPaymentErrorCode.INVALID_REQUEST;
+                case "INVALID_REFUND_ACCOUNT_NUMBER" -> TossCancelPaymentErrorCode.INVALID_REFUND_ACCOUNT_NUMBER;
+                case "INVALID_BANK" -> TossCancelPaymentErrorCode.INVALID_BANK;
+                case "NOT_MATCHES_REFUNDABLE_AMOUNT" -> TossCancelPaymentErrorCode.NOT_MATCHES_REFUNDABLE_AMOUNT;
+                case "PROVIDER_ERROR" -> TossCancelPaymentErrorCode.PROVIDER_ERROR;
+                case "REFUND_REJECTED" -> TossCancelPaymentErrorCode.REFUND_REJECTED;
+                case "ALREADY_REFUND_PAYMENT" -> TossCancelPaymentErrorCode.ALREADY_REFUND_PAYMENT;
+                case "FORBIDDEN_BANK_REFUND_REQUEST" -> TossCancelPaymentErrorCode.FORBIDDEN_BANK_REFUND_REQUEST;
+                default -> TossCancelPaymentErrorCode.COMMON_ERROR;
+            };
+            case 401 -> switch (tossCode) {
+                case "UNAUTHORIZED_KEY" -> TossCancelPaymentErrorCode.UNAUTHORIZED_KEY;
+                default -> TossCancelPaymentErrorCode.COMMON_ERROR;
+            };
+            case 403 -> switch (tossCode) {
+                case "NOT_CANCELABLE_AMOUNT" -> TossCancelPaymentErrorCode.NOT_CANCELABLE_AMOUNT;
+                case "FORBIDDEN_CONSECUTIVE_REQUEST" -> TossCancelPaymentErrorCode.FORBIDDEN_CONSECUTIVE_REQUEST;
+                case "FORBIDDEN_REQUEST" -> TossCancelPaymentErrorCode.FORBIDDEN_REQUEST;
+                case "NOT_CANCELABLE_PAYMENT" -> TossCancelPaymentErrorCode.NOT_CANCELABLE_PAYMENT;
+                case "EXCEED_MAX_REFUND_DUE" -> TossCancelPaymentErrorCode.EXCEED_MAX_REFUND_DUE;
+                case "NOT_ALLOWED_PARTIAL_REFUND_WAITING_DEPOSIT" -> TossCancelPaymentErrorCode.NOT_ALLOWED_PARTIAL_REFUND_WAITING_DEPOSIT;
+                case "NOT_ALLOWED_PARTIAL_REFUND" -> TossCancelPaymentErrorCode.NOT_ALLOWED_PARTIAL_REFUND;
+                case "NOT_AVAILABLE_BANK" -> TossCancelPaymentErrorCode.NOT_AVAILABLE_BANK;
+                case "INCORRECT_BASIC_AUTH_FORMAT" -> TossCancelPaymentErrorCode.INCORRECT_BASIC_AUTH_FORMAT;
+                case "NOT_CANCELABLE_PAYMENT_FOR_DORMANT_USER" -> TossCancelPaymentErrorCode.NOT_CANCELABLE_PAYMENT_FOR_DORMANT_USER;
+                default -> TossCancelPaymentErrorCode.COMMON_ERROR;
+            };
+            case 404 -> switch (tossCode) {
+                case "NOT_FOUND_PAYMENT" -> TossCancelPaymentErrorCode.NOT_FOUND_PAYMENT;
+                default -> TossCancelPaymentErrorCode.COMMON_ERROR;
+            };
+            case 500 -> switch (tossCode) {
+                case "FAILED_INTERNAL_SYSTEM_PROCESSING" -> TossCancelPaymentErrorCode.FAILED_INTERNAL_SYSTEM_PROCESSING;
+                case "FAILED_REFUND_PROCESS" -> TossCancelPaymentErrorCode.FAILED_REFUND_PROCESS;
+                case "FAILED_METHOD_HANDLING_CANCEL" -> TossCancelPaymentErrorCode.FAILED_METHOD_HANDLING_CANCEL;
+                case "FAILED_PARTIAL_REFUND" -> TossCancelPaymentErrorCode.FAILED_PARTIAL_REFUND;
+                case "FAILED_PAYMENT_INTERNAL_SYSTEM_PROCESSING" -> TossCancelPaymentErrorCode.FAILED_PAYMENT_INTERNAL_SYSTEM_PROCESSING;
+                case "FAILED_CLOSED_ACCOUNT_REFUND" -> TossCancelPaymentErrorCode.FAILED_CLOSED_ACCOUNT_REFUND;
+                default -> TossCancelPaymentErrorCode.COMMON_ERROR;
+            };
+            default -> TossCancelPaymentErrorCode.COMMON_ERROR;
         };
     }
 }

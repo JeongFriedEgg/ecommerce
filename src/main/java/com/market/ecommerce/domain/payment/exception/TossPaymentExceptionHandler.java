@@ -37,6 +37,18 @@ public class TossPaymentExceptionHandler {
         return new ResponseEntity<>(errorResponse, HttpStatus.valueOf(errorCode.getStatusCode()));
     }
 
+    @ExceptionHandler(TossCancelPaymentException.class)
+    public ResponseEntity<TossPaymentErrorResponse> handleTossCancelPaymentException(TossCancelPaymentException e) {
+        TossCancelPaymentErrorCode errorCode = e.getErrorCode();
+        TossPaymentErrorResponse errorResponse = TossPaymentErrorResponse.builder()
+                .status(errorCode.getStatusCode())
+                .code(errorCode.name())
+                .message(errorCode.getMessage())
+                .build();
+
+        return new ResponseEntity<>(errorResponse, HttpStatus.valueOf(errorCode.getStatusCode()));
+    }
+
     @ExceptionHandler(TossPaymentException.class)
     public ResponseEntity<TossPaymentErrorResponse> handleTossPaymentException(TossPaymentException e) {
         TossPaymentErrorCode errorCode = e.getErrorCode();

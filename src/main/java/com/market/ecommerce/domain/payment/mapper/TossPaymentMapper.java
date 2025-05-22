@@ -1,7 +1,7 @@
 package com.market.ecommerce.domain.payment.mapper;
 
 import com.market.ecommerce.domain.payment.entity.TossPayment;
-import com.market.ecommerce.domain.payment.service.request.TossPaymentResponse;
+import com.market.ecommerce.domain.payment.service.response.TossPaymentResponse;
 import org.springframework.stereotype.Component;
 
 @Component

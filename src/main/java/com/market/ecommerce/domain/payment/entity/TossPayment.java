@@ -39,4 +39,7 @@ public class TossPayment {
     private String requestedAt; // 결제가 일어난 날짜와 시간 정보
 
     private String approvedAt; // 결제 승인이 일어난 날짜와 시간 정보
+
+    private String cancelReason;
+    private String cancelAt;
 }

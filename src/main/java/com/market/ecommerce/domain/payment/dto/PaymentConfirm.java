@@ -2,7 +2,7 @@ package com.market.ecommerce.domain.payment.dto;
 
 import com.fasterxml.jackson.databind.PropertyNamingStrategies;
 import com.fasterxml.jackson.databind.annotation.JsonNaming;
-import com.market.ecommerce.domain.payment.service.request.TossPaymentResponse;
+import com.market.ecommerce.domain.payment.service.response.TossPaymentResponse;
 import lombok.Builder;
 import lombok.Getter;
 

@@ -1,16 +1,15 @@
-package com.market.ecommerce.domain.payment.service.request;
+package com.market.ecommerce.domain.payment.service.response;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.databind.PropertyNamingStrategies;
-import com.fasterxml.jackson.databind.annotation.JsonNaming;
 import lombok.*;
+
+import java.util.List;
 
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @ToString
-@JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class TossPaymentResponse {
     private String mId;
@@ -25,6 +24,9 @@ public class TossPaymentResponse {
     private Boolean useEscrow;
     private Boolean cultureExpense;
     private Card card; // 카드 정보
+
+    private List<Cancels> cancels;
+
     private String type; // NORMAL, BRANDPAY 등
     private EasyPay easyPay; // 간편결제 정보
     private String country;
@@ -46,7 +48,6 @@ public class TossPaymentResponse {
     @Setter
     @NoArgsConstructor
     @AllArgsConstructor
-    @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
     @JsonInclude(JsonInclude.Include.NON_NULL)
     public static class Card {
         private String issuerCode;
@@ -67,7 +68,26 @@ public class TossPaymentResponse {
     @Setter
     @NoArgsConstructor
     @AllArgsConstructor
-    @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    public static class Cancels {
+        private String transactionKey;
+        private String cancelReason;
+        private Long taxExemptionAmount;
+        private String canceledAt;
+        private Long transferDiscountAmount;
+        private Long easyPayDiscountAmount;
+        private String receiptKey;
+        private Long cancelAmount;
+        private Long taxFreeAmount;
+        private Long refundableAmount;
+        private String cancelStatus;
+        private String cancelRequestId;
+    }
+
+    @Getter
+    @Setter
+    @NoArgsConstructor
+    @AllArgsConstructor
     @JsonInclude(JsonInclude.Include.NON_NULL)
     public static class EasyPay {
         private String provider;
@@ -79,7 +99,6 @@ public class TossPaymentResponse {
     @Setter
     @NoArgsConstructor
     @AllArgsConstructor
-    @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
     @JsonInclude(JsonInclude.Include.NON_NULL)
     public static class Failure {
         private String code;
@@ -90,7 +109,6 @@ public class TossPaymentResponse {
     @Setter
     @NoArgsConstructor
     @AllArgsConstructor
-    @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
     @JsonInclude(JsonInclude.Include.NON_NULL)
     public static class Receipt {
         private String url;
@@ -100,7 +118,6 @@ public class TossPaymentResponse {
     @Setter
     @NoArgsConstructor
     @AllArgsConstructor
-    @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
     @JsonInclude(JsonInclude.Include.NON_NULL)
     public static class Checkout {
         private String url;

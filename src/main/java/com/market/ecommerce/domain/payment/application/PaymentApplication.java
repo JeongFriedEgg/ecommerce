@@ -7,7 +7,7 @@ import com.market.ecommerce.domain.payment.exception.TossConfirmPaymentException
 import com.market.ecommerce.domain.payment.exception.TossGetPaymentException;
 import com.market.ecommerce.domain.payment.exception.TossPaymentException;
 import com.market.ecommerce.domain.payment.service.PaymentService;
-import com.market.ecommerce.domain.payment.service.request.TossPaymentResponse;
+import com.market.ecommerce.domain.payment.service.response.TossPaymentResponse;
 import com.market.ecommerce.domain.user.service.CustomerService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -36,7 +36,7 @@ public class PaymentApplication {
         *      결제 생성 데이터와 일치하는지 확인
         *   2. 결제 승인 요청을 서버에서 토스페이먼츠 서버로 전송
         * */
-        paymentService.retrievePayment(req);
+        paymentService.getPayment(req);
 
         TossPaymentResponse paymentConfirm = paymentService.confirmPayment(
                 req.getPaymentKey(), req.getOrderId(), Long.valueOf(req.getAmount()));
