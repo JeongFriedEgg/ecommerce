@@ -52,4 +52,9 @@ public class CustomerService {
         customerRepository.findByUsername(customerId)
                 .orElseThrow(() -> new UserException(USER_NOT_FOUND));
     }
+
+    public Customer getCustomerByUsername(String customerId) {
+        return customerRepository.findByUsername(customerId)
+                .orElseThrow(() -> new UserException(USER_NOT_FOUND));
+    }
 }
