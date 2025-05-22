@@ -4,8 +4,11 @@ import com.market.ecommerce.common.client.redis.RedisClient;
 import com.market.ecommerce.domain.order.dto.OrderCreate;
 import com.market.ecommerce.domain.order.entity.Order;
 import com.market.ecommerce.domain.order.entity.OrderItem;
+import com.market.ecommerce.domain.order.exception.OrderErrorCode;
+import com.market.ecommerce.domain.order.exception.OrderException;
 import com.market.ecommerce.domain.order.mapper.OrderMapper;
 import com.market.ecommerce.domain.order.repository.OrderRepository;
+import com.market.ecommerce.domain.order.type.OrderState;
 import com.market.ecommerce.domain.user.entity.impl.Customer;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -64,5 +67,17 @@ public class OrderService {
 
     private String buildRedisKey(String date) {
         return ORDER_LAST_UNIQUE_ID_SUFFIX_KEY_PREFIX + date;
+    }
+
+    @Transactional
+    public void updateOrderStateWhenConfirmPayment(String orderId) {
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new OrderException(
+                        OrderErrorCode.ORDER_NOT_FOUND,
+                        List.of("orderId: " + orderId
+                        )
+                ));
+
+        order.setOrderState(OrderState.PAID);
     }
 }
