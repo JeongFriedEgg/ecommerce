@@ -6,11 +6,14 @@ import com.market.ecommerce.domain.cart.dto.RemoveProductFromCart;
 import com.market.ecommerce.domain.cart.entity.Cart;
 import com.market.ecommerce.domain.cart.exception.CartException;
 import com.market.ecommerce.domain.cart.mapper.CartMapper;
+import com.market.ecommerce.domain.cart.service.dto.PutCartCommand;
+import com.market.ecommerce.domain.cart.service.dto.CartResult;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 
 import static com.market.ecommerce.domain.cart.exception.CartErrorCode.CART_NOT_FOUND;
 import static com.market.ecommerce.domain.cart.exception.CartErrorCode.PRODUCT_NOT_IN_CART;
@@ -21,13 +24,26 @@ public class CartService {
     private final RedisClient redisClient;
     private final CartMapper cartMapper;
 
-    public Cart getCart(String customerId) {
+    public CartResult getCart(String customerId) {
         Cart cart = redisClient.getValue(customerId, Cart.class);
-        return cart != null ? cart : new Cart();
+        if (cart == null) {
+            return CartResult.builder().cartItems(Collections.emptyList()).build();
+        }
+        List<CartResult.CartItem> resultItems = cart.getCartItems().stream()
+                .map(cartMapper::mapToResultItem)
+                .toList();
+
+        return CartResult.builder()
+                .cartItems(resultItems)
+                .build();
     }
 
-    public void putCart(Cart cart) {
-        redisClient.putValue(cart.getCustomerId(), cart);
+    public void putCart(String customerId, List<PutCartCommand> putCartCommands) {
+        if (putCartCommands == null || putCartCommands.isEmpty()) {
+            return;
+        }
+        Cart cart = cartMapper.convertToCart(customerId, putCartCommands);
+        redisClient.putValue(customerId, cart);
     }
 
     public Cart addProductToCart(AddProductToCart.Request req, String customerId){
@@ -39,7 +55,7 @@ public class CartService {
             cart.setCustomerId(customerId);
         }
 
-        Set<Cart.CartItem> cartItems = cart.getCartItems();
+        List<Cart.CartItem> cartItems = cart.getCartItems();
 
         // 요청받은 아이템이 장바구니에 존재하는지 확인
         Optional<Cart.CartItem> cartItemOptional = cart.getCartItems().stream()

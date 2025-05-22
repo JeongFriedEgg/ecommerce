@@ -3,6 +3,7 @@ package com.market.ecommerce.domain.cart.dto;
 import com.fasterxml.jackson.databind.PropertyNamingStrategies;
 import com.fasterxml.jackson.databind.annotation.JsonNaming;
 import com.market.ecommerce.domain.cart.entity.Cart;
+import com.market.ecommerce.domain.product.type.ProductType;
 import lombok.Builder;
 import lombok.Getter;
 
@@ -18,6 +19,7 @@ public class AddProductToCart {
         private String mainImageUrl;
         private Integer price;
         private Integer quantity; // 고객이 장바구니에 상품을 추가하려는 개수를 의미
+        private String status;
     }
 
     @Getter
@@ -34,6 +36,7 @@ public class AddProductToCart {
             private String mainImageUrl;
             private Integer price;
             private Integer quantity;
+            private ProductType status;
         }
 
         public static Response from(Cart cart) {
@@ -45,6 +48,7 @@ public class AddProductToCart {
                                     .mainImageUrl(item.getMainImageUrl())
                                     .price(item.getPrice())
                                     .quantity(item.getQuantity())
+                                    .status(item.getStatus())
                                     .build()
                             )
                             .collect(Collectors.toSet()))
