@@ -49,6 +49,7 @@ public class SecurityConfig {
                                 "/customer/signup", "/seller/signup", "/admin/signup",
                                 "/widget/**", "/payment/**", "/brandpay/**", "/style.css"
                         ).permitAll()
+                        .requestMatchers("/order/**","/payment/**").hasRole("CUSTOMER")
                         .requestMatchers("/product/**").hasRole("SELLER")
                         .anyRequest().authenticated());
 

@@ -9,6 +9,9 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.util.ObjectUtils;
 
+import java.time.Duration;
+import java.util.Objects;
+
 import static com.market.ecommerce.common.exception.redis.RedisErrorCode.JSON_DESERIALIZE_FAILED;
 import static com.market.ecommerce.common.exception.redis.RedisErrorCode.JSON_SERIALIZE_FAILED;
 
@@ -19,6 +22,18 @@ public class RedisClient {
 
     private final RedisTemplate<String, Object> redisTemplate;
     private final ObjectMapper objectMapper;
+
+    public Long incrementValueWithExpireOnce(String key, long ttl) {
+        Boolean exists = redisTemplate.hasKey(key);
+
+        Long value = redisTemplate.opsForValue().increment(key);
+
+        if (Boolean.FALSE.equals(exists)) {
+            redisTemplate.expire(key, Duration.ofSeconds(ttl));
+        }
+
+        return value;
+    }
 
     public <T> void putValue(Object key, T value) {
         try {

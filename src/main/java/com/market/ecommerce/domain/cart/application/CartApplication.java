@@ -5,18 +5,21 @@ import com.market.ecommerce.domain.cart.dto.GetCart;
 import com.market.ecommerce.domain.cart.dto.RemoveProductFromCart;
 import com.market.ecommerce.domain.cart.entity.Cart;
 import com.market.ecommerce.domain.cart.exception.CartException;
+import com.market.ecommerce.domain.cart.mapper.CartMapper;
 import com.market.ecommerce.domain.cart.service.CartService;
+import com.market.ecommerce.domain.cart.service.dto.CartResult;
+import com.market.ecommerce.domain.cart.service.dto.PutCartCommand;
 import com.market.ecommerce.domain.product.entity.Product;
 import com.market.ecommerce.domain.product.service.ProductService;
-import com.market.ecommerce.domain.product.type.ProductType;
+import com.market.ecommerce.domain.product.service.ProductValidationService;
+import com.market.ecommerce.domain.product.service.dto.ProductValidationCommand;
+import com.market.ecommerce.domain.product.service.dto.ProductValidationResult;
 import com.market.ecommerce.domain.user.service.CustomerService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 
 import static com.market.ecommerce.domain.cart.exception.CartErrorCode.CART_IS_EMPTY;
 import static com.market.ecommerce.domain.cart.exception.CartErrorCode.OUT_OF_STOCK;
@@ -28,6 +31,8 @@ public class CartApplication {
     private final CustomerService customerService;
     private final CartService cartService;
     private final ProductService productService;
+    private final ProductValidationService productValidationService;
+    private final CartMapper cartMapper;
 
     public AddProductToCart.Response addProductToCart(
             AddProductToCart.Request req, String username
@@ -69,103 +74,29 @@ public class CartApplication {
     public GetCart.Response getCart(String username) {
         customerService.findCustomerByUsername(username);
 
-        Cart cart = cartService.getCart(username);
+        CartResult cartItems = cartService.getCart(username);
 
-        if (cart == null || cart.getCartItems().isEmpty()) {
+        if (cartItems == null || cartItems.getCartItems().isEmpty()) {
             throw new CartException(CART_IS_EMPTY);
         }
 
+        ProductValidationCommand command = cartMapper.toValidationCommand(cartItems.getCartItems());
+
+        ProductValidationResult productValidationResult =
+                productValidationService.validateProducts(command);
+
         // 장바구니 객체가 비어있지 않은 경우, 장바구니 내의 상품 정보에 대한 업데이트 진행
-
-        // 장바구니에 있는 모든 productId 추출
-        // 장바구니에 있는 CartItem 의 productId 로 Product 객체들을 조회
-        Set<Long> productIds = cart.getCartItems().stream()
-                .map(Cart.CartItem::getProductId)
-                .collect(Collectors.toSet());
-
-        // 한 번의 쿼리로 모든 Product 조회
-        List<Product> products = productService.findAllById(productIds);
-        Map<Long, Product> productMap = products.stream()
-                .collect(Collectors.toMap(Product::getId, Function.identity()));
-
-        // 응답에 대한 CartItems, messages 객체 생성
-        List<GetCart.Response.CartItem> cartItems = new ArrayList<>();
-        List<String> messages = new ArrayList<>();
-
-        Set<Cart.CartItem> updatedCartItems = new HashSet<>();
-
-        for (Cart.CartItem cartItem : cart.getCartItems()) {
-            Long productId = cartItem.getProductId();
-            Product product = productMap.get(productId);
-
-            // productId 로 조회했을 때, 상품 데이터가 없는 경우에는 상품 아이디를 상품이 없어졌다는 메시지와 함께 담음.
-            if (product == null) {
-                messages.add("상품 ID [" + productId + "]는 더 이상 판매자에 의해 삭제되었습니다.");
-                continue;
-            }
-
-            // Cart 에 담겨진 CartItem 과 Product 객체의 데이터를 비교하여, 데이터가 변경된 경우, 변경되었다는 메세지를 담음.
-            // 상품 가격이 변경된 경우에만 메세지를 담음.
-            if (product.getPrice() != cartItem.getPrice()) {
-                messages.add("상품 [" + product.getTitle() + "]의 가격이 변경되었습니다. 기존: " +
-                        cartItem.getPrice() + "원, 현재: " + product.getPrice() + "원");
-            }
-
-            // 상품이 판매가능한 상태인지 확인
-            if (product.getStatus().equals(ProductType.OUT_OF_STOCK)) {
-                messages.add("상품 [" + product.getTitle() + "]은 일시 품절 상태입니다.");
-            } else if (product.getStatus().equals(ProductType.SOLD_OUT)) {
-                messages.add("상품 [" + product.getTitle() + "]은 판매 종료되었습니다.");
-            }
-
-            // 상품 재고가 장바구니의 수량보다 작은 경우, 재고가 부족하다는 메세지를 담음.
-            if (product.getStock() < cartItem.getQuantity()) {
-                messages.add("상품 [" + product.getTitle() + "]의 재고가 부족합니다. 현재 재고: " +
-                        product.getStock());
-            }
-
-            // 업데이트할 장바구니 아이템 객체 생성
-            Cart.CartItem updatedCartItem = Cart.CartItem.builder()
-                        .productId(product.getId())
-                        .title(product.getTitle())
-                        .mainImageUrl(
-                                getMainImageUrl(product)
-                        )
-                        .price(product.getPrice())
-                        .quantity(cartItem.getQuantity())
-                        .build();
-
-            // 업데이트할 장바구니 아이템 리스트에 객체 추가
-            updatedCartItems.add(updatedCartItem);
-
-            // 응답에 사용하되는 장바구니 아이템 리스트 객체에 데이터 담음
-            cartItems.add(
-                    GetCart.Response.CartItem.builder()
-                            .productId(product.getId())
-                            .title(product.getTitle())
-                            .mainImageUrl(
-                                    getMainImageUrl(product)
-                            )
-                            .price(product.getPrice())
-                            .quantity(cartItem.getQuantity())
-                            .build()
-            );
-        }
+        List<PutCartCommand> cartCommands =
+                cartMapper.toPutCartCommands(productValidationResult.getProductItems());
 
         // 업데이트된 장바구니 아이템들을 다시 레디스에 저장
-        cart.setCartItems(updatedCartItems);
-        cartService.putCart(cart);
+        cartService.putCart(username, cartCommands);
 
         // 응답 객체 반환
         return GetCart.Response.builder()
-                .cartItems(cartItems)
-                .messages(messages)
+                .cartItems(GetCart.Response.fromProductItems(productValidationResult.getProductItems()))
+                .messages(productValidationResult.getMessages())
                 .build();
-    }
-
-    private String getMainImageUrl(Product product) {
-        return product.getProductImages().isEmpty() ?
-                null : product.getProductImages().get(0).getImageUrl();
     }
 
     public void clearCart(String username) {
