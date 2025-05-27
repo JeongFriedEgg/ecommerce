@@ -2,6 +2,7 @@ package com.market.ecommerce.domain.product.entity;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.market.ecommerce.domain.category.entity.Category;
+import com.market.ecommerce.domain.product.exception.ProductException;
 import com.market.ecommerce.domain.product.type.ProductType;
 import com.market.ecommerce.domain.user.entity.impl.Seller;
 import jakarta.persistence.*;
@@ -15,6 +16,8 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+
+import static com.market.ecommerce.domain.product.exception.ProductErrorCode.PRODUCT_INSUFFICIENT_STOCK;
 
 @Entity
 @Table(name = "product")
@@ -63,6 +66,10 @@ public class Product {
     @Column(nullable = false)
     private ProductType status;
 
+    @Version
+    @Column(nullable = false)
+    private Long version;
+
     @CreatedDate
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     @Column(name = "created_at", updatable = false)
@@ -79,5 +86,16 @@ public class Product {
         this.description = description;
         this.price = price;
         this.stock = stock;
+    }
+
+    public void decreaseStock(int quantity) {
+        if (this.stock < quantity) {
+            throw new ProductException(PRODUCT_INSUFFICIENT_STOCK);
+        }
+        this.stock -= quantity;
+    }
+
+    public void increaseStock(int quantity) {
+        this.stock += quantity;
     }
 }

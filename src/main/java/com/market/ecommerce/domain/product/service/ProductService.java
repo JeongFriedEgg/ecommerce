@@ -9,6 +9,7 @@ import com.market.ecommerce.domain.product.mapper.ProductMapper;
 import com.market.ecommerce.domain.product.repository.ProductRepository;
 import com.market.ecommerce.domain.product.service.dto.ProductStockAdjustmentCommand;
 import com.market.ecommerce.domain.user.entity.impl.Seller;
+import jakarta.persistence.OptimisticLockException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -31,6 +32,7 @@ public class ProductService {
         return productRepository.save(product);
     }
 
+    @Transactional
     public Product update(ProductUpdate.Request req, Seller seller, Set<Category> categories) {
         Product product = productRepository.findById(req.getId())
                 .orElseThrow(() -> new ProductException(PRODUCT_NOT_FOUND));
@@ -41,18 +43,44 @@ public class ProductService {
 
         product.updateInfo(categories, req.getTitle(), req.getDescription(), req.getPrice(), req.getStock());
 
-        return product;
+        try {
+            return product;
+        } catch (OptimisticLockException e) {
+            throw new ProductException(OPTIMISTIC_LOCK_FAILURE);
+        }
     }
 
     @Transactional
     public void increaseStockForCanceledOrder(List<ProductStockAdjustmentCommand> stockAdjustments) {
         for (ProductStockAdjustmentCommand adjustment : stockAdjustments) {
-            int updatedRows = productRepository
-                    .increaseStockById(adjustment.getProductId(), adjustment.getQuantity());
+            Product product = productRepository.findById(adjustment.getProductId())
+                    .orElseThrow(() -> new ProductException(PRODUCT_NOT_FOUND));
 
-            if (updatedRows == 0) {
-                throw new ProductException(PRODUCT_NOT_FOUND);
+            product.increaseStock(adjustment.getQuantity());
+
+            try {
+                productRepository.save(product);
+            } catch (OptimisticLockException e) {
+                throw new ProductException(OPTIMISTIC_LOCK_FAILURE);
             }
+        }
+    }
+
+    @Transactional
+    public void decreaseStockForOrder(Long productId, int quantity) {
+        Product product = productRepository.findById(productId)
+                .orElseThrow(() -> new ProductException(PRODUCT_NOT_FOUND));
+
+        if (product.getStock() < quantity) {
+            throw new ProductException(PRODUCT_INSUFFICIENT_STOCK);
+        }
+
+        product.decreaseStock(quantity);
+
+        try {
+            productRepository.save(product);
+        } catch (OptimisticLockException e) {
+            throw new ProductException(OPTIMISTIC_LOCK_FAILURE);
         }
     }
 
