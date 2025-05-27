@@ -8,7 +8,7 @@ public enum OrderState {
     SHIPPED,            // 배송 시작됨
     DELIVERED,          // 배송 완료
     COMPLETED,          // 구매 확정
-    CANCELED,           // 결제 전 취소
+    CANCELED,           // 주문 취소
     REFUND_REQUESTED,   // 반품 요청
     REFUNDED            // 환불 완료
 }

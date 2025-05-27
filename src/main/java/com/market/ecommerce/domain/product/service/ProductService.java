@@ -7,6 +7,7 @@ import com.market.ecommerce.domain.product.entity.Product;
 import com.market.ecommerce.domain.product.exception.ProductException;
 import com.market.ecommerce.domain.product.mapper.ProductMapper;
 import com.market.ecommerce.domain.product.repository.ProductRepository;
+import com.market.ecommerce.domain.product.service.dto.ProductStockAdjustmentCommand;
 import com.market.ecommerce.domain.user.entity.impl.Seller;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -41,6 +42,18 @@ public class ProductService {
         product.updateInfo(categories, req.getTitle(), req.getDescription(), req.getPrice(), req.getStock());
 
         return product;
+    }
+
+    @Transactional
+    public void increaseStockForCanceledOrder(List<ProductStockAdjustmentCommand> stockAdjustments) {
+        for (ProductStockAdjustmentCommand adjustment : stockAdjustments) {
+            int updatedRows = productRepository
+                    .increaseStockById(adjustment.getProductId(), adjustment.getQuantity());
+
+            if (updatedRows == 0) {
+                throw new ProductException(PRODUCT_NOT_FOUND);
+            }
+        }
     }
 
     public Product findProductById(Long productId, Seller seller) {

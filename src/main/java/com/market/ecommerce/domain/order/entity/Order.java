@@ -6,6 +6,7 @@ import com.market.ecommerce.domain.user.entity.impl.Customer;
 import jakarta.persistence.*;
 import lombok.*;
 import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.LocalDateTime;
@@ -31,13 +32,18 @@ public class Order {
     private Customer customer;
 
     @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
-    @JoinColumn(name = "order_id")
+    @JoinColumn(name = "order_items")
     private List<OrderItem> orderItems = new ArrayList<>();
 
     @CreatedDate
     @JsonFormat(pattern = "yyyyMMdd-HHmmss")
     @Column(name = "order_date", nullable = false, updatable = false)
     private LocalDateTime orderDate;
+
+    @LastModifiedDate
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+    @Column(name = "updated_at")
+    private LocalDateTime orderCanceledDate;
 
     @Column(name = "total_amount", nullable = false)
     private Integer totalAmount;

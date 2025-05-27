@@ -1,6 +1,7 @@
 package com.market.ecommerce.domain.order.service;
 
 import com.market.ecommerce.common.client.redis.RedisClient;
+import com.market.ecommerce.domain.order.dto.OrderCancel;
 import com.market.ecommerce.domain.order.dto.OrderCreate;
 import com.market.ecommerce.domain.order.entity.Order;
 import com.market.ecommerce.domain.order.entity.OrderItem;
@@ -17,6 +18,8 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+
+import static com.market.ecommerce.domain.order.type.OrderState.CANCELED;
 
 @Service
 @RequiredArgsConstructor
@@ -43,6 +46,17 @@ public class OrderService {
         Order order = orderMapper.toEntity(orderId, customer, totalAmount, orderItems);
 
         return orderRepository.save(order);
+    }
+
+    @Transactional
+    public Order cancelOrder(OrderCancel.Request req) {
+        Order order = orderRepository.findById(req.getOrderId())
+                .orElseThrow(() -> new OrderException(OrderErrorCode.ORDER_NOT_FOUND));
+
+        order.setOrderState(CANCELED);
+        order.setOrderCanceledDate(LocalDateTime.now());
+
+        return order;
     }
 
     private OrderItem toOrderItem(OrderCreate.Request.ProductInfo productInfo) {

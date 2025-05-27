@@ -1,16 +1,22 @@
 package com.market.ecommerce.domain.order.application;
 
+import com.market.ecommerce.domain.order.dto.OrderCancel;
 import com.market.ecommerce.domain.order.dto.OrderCreate;
 import com.market.ecommerce.domain.order.entity.Order;
 import com.market.ecommerce.domain.order.mapper.OrderMapper;
 import com.market.ecommerce.domain.order.service.OrderService;
+import com.market.ecommerce.domain.payment.service.PaymentService;
+import com.market.ecommerce.domain.payment.service.response.TossPaymentResponse;
+import com.market.ecommerce.domain.product.service.ProductService;
 import com.market.ecommerce.domain.product.service.ProductValidationService;
+import com.market.ecommerce.domain.product.service.dto.ProductStockAdjustmentCommand;
 import com.market.ecommerce.domain.product.service.dto.ProductValidationCommand;
 import com.market.ecommerce.domain.user.entity.impl.Customer;
 import com.market.ecommerce.domain.user.service.CustomerService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 
 
 @Service
@@ -20,6 +26,8 @@ public class OrderApplication {
     private final CustomerService customerService;
     private final OrderMapper orderMapper;
     private final ProductValidationService productValidationService;
+    private final PaymentService paymentService;
+    private final ProductService productService;
 
     public OrderCreate.Response createOrder(
             OrderCreate.Request req, String customerId
@@ -40,5 +48,30 @@ public class OrderApplication {
         Order createdOrder = orderService.createOrder(req, customer);
 
         return OrderCreate.Response.from(createdOrder);
+    }
+
+    public OrderCancel.Response cancelOrder(
+            OrderCancel.Request req, String customerId
+    ){
+        customerService.getCustomerByUsername(customerId);
+
+        /*
+         *      1. orderId, paymentKey, amount 값들의 유효성 검증.
+         *      2. 결제 취소 요청
+         *      3. 주문 데이터 취소 업데이트
+         *      4. 상품의 재고 변경
+         * */
+        TossPaymentResponse paymentCancel=
+                paymentService.cancelPayment(req.getPaymentKey(),req.getCancelReason());
+
+        Order cancelOrder = orderService.cancelOrder(req);
+
+        List<ProductStockAdjustmentCommand> stockAdjustments = orderMapper.toProductStockAdjustments(cancelOrder.getOrderItems());
+
+        if (!stockAdjustments.isEmpty()) {
+            productService.increaseStockForCanceledOrder(stockAdjustments);
+        }
+
+        return OrderCancel.Response.from(paymentCancel, cancelOrder);
     }
 }

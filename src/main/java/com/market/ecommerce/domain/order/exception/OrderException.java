@@ -2,12 +2,18 @@ package com.market.ecommerce.domain.order.exception;
 
 import lombok.Getter;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Getter
 public class OrderException extends RuntimeException {
     private final OrderErrorCode errorCode;
     private final List<String> details;
+
+    public OrderException(OrderErrorCode errorCode) {
+        this.errorCode = errorCode;
+        this.details = new ArrayList<>();
+    }
 
     public OrderException(OrderErrorCode errorCode, List<String> details) {
         super(errorCode.getMessage());
