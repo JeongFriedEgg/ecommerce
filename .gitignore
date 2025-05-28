@@ -1,3 +1,5 @@
+**/application-aws-s3.properties
+
 # Created by https://www.toptal.com/developers/gitignore/api/macos,intellij+all
 # Edit at https://www.toptal.com/developers/gitignore?templates=macos,intellij+all
 
@@ -123,5 +125,3 @@ Temporary Items
 *.icloud
 
 # End of https://www.toptal.com/developers/gitignore/api/macos,intellij+all
-# 프로젝트 제외 경로
-/.gradle/
