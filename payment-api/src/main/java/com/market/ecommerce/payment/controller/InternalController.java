@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import reactor.core.publisher.Mono;
 
 @RestController
 @RequiredArgsConstructor
@@ -17,8 +18,8 @@ public class InternalController {
     private final PaymentService paymentService;
 
     @PostMapping("/cancel")
-    public ResponseEntity<TossPaymentResponse> cancelPayment(@RequestBody CancelPaymentRequest req) {
-        TossPaymentResponse paymentCancel = paymentService.cancelPayment(req.getPaymentKey(), req.getCancelReason());
-        return ResponseEntity.ok(paymentCancel);
+    public Mono<ResponseEntity<TossPaymentResponse>> cancelPayment(@RequestBody CancelPaymentRequest req) {
+        return paymentService.cancelPayment(req.getPaymentKey(), req.getCancelReason())
+                .map(ResponseEntity::ok);
     }
 }

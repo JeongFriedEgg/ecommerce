@@ -19,9 +19,13 @@ import org.springframework.http.client.ClientHttpResponse;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestClient;
+import org.springframework.web.reactive.function.client.WebClient;
+import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Schedulers;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.annotation.Retention;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.Objects;
@@ -33,106 +37,140 @@ public class PaymentService {
     private String secretKey;
     private static final String TOSS_CLIENT_URI = "https://api.tosspayments.com/v1/payments";
 
+    private final WebClient webClient;
     private final RestClient restClient;
     private final ObjectMapper objectMapper;
     private final TossPaymentRepository tossPaymentRepository;
     private final TossPaymentMapper tossPaymentMapper;
 
 
-    public void getPayment(PaymentConfirm.Request req) {
+    public Mono<Void> getPayment(PaymentConfirm.Request req) {
         String paymentKey = req.getPaymentKey();
         String orderId = req.getOrderId();
         String amount = req.getAmount();
-        TossPaymentResponse res = restClient.get()
+
+        return webClient.get()
                 .uri(TOSS_CLIENT_URI + "/{paymentKey}", paymentKey)
                 .header(HttpHeaders.AUTHORIZATION, createAuthorizationHeader())
                 .header(HttpHeaders.ACCEPT, MediaType.APPLICATION_JSON_VALUE)
                 .retrieve()
-                .onStatus(HttpStatusCode::is4xxClientError, (request, response) -> {
-                    TossErrorResponse errorResponse = parseClientErrorResponse(response);
-                    TossGetPaymentErrorCode code = mapTossGetPaymentErrorCodeToEnum(response.getStatusCode(), errorResponse.getError().getCode());
-                    throw new TossGetPaymentException(code);
-                })
-                .onStatus(HttpStatusCode::is5xxServerError, (request, response) -> {
-                    TossErrorResponse errorResponse = parseClientErrorResponse(response);
-                    TossGetPaymentErrorCode code = mapTossGetPaymentErrorCodeToEnum(response.getStatusCode(), errorResponse.getError().getCode());
-                    throw new TossGetPaymentException(code);
-                })
-                .body(TossPaymentResponse.class);
+                .onStatus(HttpStatusCode::is4xxClientError, response ->
+                        response.bodyToMono(TossErrorResponse.class)
+                                .flatMap(errorResponse -> {
+                                    TossGetPaymentErrorCode code = mapTossGetPaymentErrorCodeToEnum(response.statusCode(),
+                                            errorResponse != null && errorResponse.getError() != null ? errorResponse.getError().getCode() : null);
+                                    return Mono.<Throwable>error(new TossGetPaymentException(code));
+                                })
+                                .switchIfEmpty(Mono.<Throwable>error(new TossGetPaymentException(TossGetPaymentErrorCode.FAILED_PAYMENT_INTERNAL_SYSTEM_PROCESSING)))
+                )
+                .onStatus(HttpStatusCode::is5xxServerError, response ->
+                        response.bodyToMono(TossErrorResponse.class)
+                                .flatMap(errorResponse -> {
+                                    TossGetPaymentErrorCode code = mapTossGetPaymentErrorCodeToEnum(response.statusCode(),
+                                            errorResponse != null && errorResponse.getError() != null ? errorResponse.getError().getCode() : null);
+                                    return Mono.<Throwable>error(new TossGetPaymentException(code));
+                                })
+                                .switchIfEmpty(Mono.<Throwable>error(new TossGetPaymentException(TossGetPaymentErrorCode.FAILED_PAYMENT_INTERNAL_SYSTEM_PROCESSING)))
+                )
+                .bodyToMono(TossPaymentResponse.class)
+                .flatMap(res -> {
+                    boolean isMismatched = !Objects.equals(paymentKey, res.getPaymentKey())
+                            || !Objects.equals(orderId, res.getOrderId())
+                            || !Objects.equals(amount, String.valueOf(res.getTotalAmount()));
 
-        boolean isMismatched = !Objects.equals(paymentKey, res.getPaymentKey())
-                || !Objects.equals(orderId, res.getOrderId())
-                || !Objects.equals(amount, String.valueOf(res.getTotalAmount()));
-
-        if (isMismatched) {
-            throw new TossPaymentException(TossPaymentErrorCode.TOSS_PAYMENT_AUTHORIZATION_INFO_MISMATCH);
-        }
+                    if (isMismatched) {
+                        return Mono.error(new TossPaymentException(TossPaymentErrorCode.TOSS_PAYMENT_AUTHORIZATION_INFO_MISMATCH));
+                    }
+                    return Mono.empty();
+                });
     }
 
-    @Transactional
-    public TossPaymentResponse confirmPayment(String paymentKey, String orderId, Long amount) {
+    @Transactional // JPA 트랜잭션은 유지. 단, JPA 작업은 별도 스레드 풀에서 실행.
+    public Mono<TossPaymentResponse> confirmPayment(String paymentKey, String orderId, Long amount) {
         TossPaymentConfirmRequest confirmRequest = new TossPaymentConfirmRequest(paymentKey, orderId, amount);
 
-        TossPaymentResponse res =  restClient.post()
-                .uri(TOSS_CLIENT_URI+"/confirm")
+        return webClient.post()
+                .uri(TOSS_CLIENT_URI + "/confirm")
                 .header(HttpHeaders.AUTHORIZATION, createAuthorizationHeader())
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
                 .header(HttpHeaders.ACCEPT, MediaType.APPLICATION_JSON_VALUE)
-                .body(confirmRequest)
+                .bodyValue(confirmRequest)
                 .retrieve()
-                .onStatus(HttpStatusCode::is4xxClientError, (request, response) -> {
-                    TossErrorResponse errorResponse = parseClientErrorResponse(response);
-                    TossConfirmPaymentErrorCode code = mapTossConfirmPaymentErrorCodeToEnum(response.getStatusCode(),errorResponse.getError().getCode());
-                    throw new TossConfirmPaymentException(code);
-                })
-                .onStatus(HttpStatusCode::is5xxServerError, (request, response) -> {
-                    TossErrorResponse errorResponse = parseClientErrorResponse(response);
-                    TossConfirmPaymentErrorCode code = mapTossConfirmPaymentErrorCodeToEnum(response.getStatusCode(),errorResponse.getError().getCode());
-                    throw new TossConfirmPaymentException(code);
-                })
-                .body(TossPaymentResponse.class);
-
-        TossPayment tossPayment = tossPaymentMapper.toEntity(res);
-        tossPaymentRepository.save(tossPayment);
-
-        return res;
+                .onStatus(HttpStatusCode::is4xxClientError, response ->
+                        response.bodyToMono(TossErrorResponse.class)
+                                .flatMap(errorResponse -> {
+                                    TossConfirmPaymentErrorCode code = mapTossConfirmPaymentErrorCodeToEnum(response.statusCode(),
+                                            errorResponse != null && errorResponse.getError() != null ? errorResponse.getError().getCode() : null);
+                                    return Mono.<Throwable>error(new TossConfirmPaymentException(code));
+                                })
+                                .switchIfEmpty(Mono.<Throwable>error(new TossConfirmPaymentException(TossConfirmPaymentErrorCode.UNKNOWN_PAYMENT_ERROR)))
+                )
+                .onStatus(HttpStatusCode::is5xxServerError, response ->
+                        response.bodyToMono(TossErrorResponse.class)
+                                .flatMap(errorResponse -> {
+                                    TossConfirmPaymentErrorCode code = mapTossConfirmPaymentErrorCodeToEnum(response.statusCode(),
+                                            errorResponse != null && errorResponse.getError() != null ? errorResponse.getError().getCode() : null);
+                                    return Mono.<Throwable>error(new TossConfirmPaymentException(code));
+                                })
+                                .switchIfEmpty(Mono.<Throwable>error(new TossConfirmPaymentException(TossConfirmPaymentErrorCode.UNKNOWN_PAYMENT_ERROR)))
+                )
+                .bodyToMono(TossPaymentResponse.class)
+                .flatMap(res ->
+                        Mono.fromCallable(() -> {
+                                    TossPayment tossPayment = tossPaymentMapper.toEntity(res);
+                                    tossPaymentRepository.save(tossPayment);
+                                    return res;
+                                })
+                                .subscribeOn(Schedulers.boundedElastic())
+                );
     }
 
     @Transactional
-    public TossPaymentResponse cancelPayment(String paymentKey, String cancelReason) {
+    public Mono<TossPaymentResponse> cancelPayment(String paymentKey, String cancelReason) {
         TossPaymentCancelRequest cancelRequest = new TossPaymentCancelRequest(cancelReason);
 
-        TossPaymentResponse res = restClient.post()
-                .uri(TOSS_CLIENT_URI + "/{paymentKey}",paymentKey)
+        return webClient.post()
+                .uri(TOSS_CLIENT_URI + "/{paymentKey}/cancel", paymentKey)
                 .header(HttpHeaders.AUTHORIZATION, createAuthorizationHeader())
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
                 .header(HttpHeaders.ACCEPT, MediaType.APPLICATION_JSON_VALUE)
-                .body(cancelRequest)
+                .bodyValue(cancelRequest)
                 .retrieve()
-                .onStatus(HttpStatusCode::is4xxClientError,(request, response) -> {
-                    TossErrorResponse errorResponse = parseClientErrorResponse(response);
-                    TossCancelPaymentErrorCode code = mapTossCancelPaymentErrorCodeToEnum(response.getStatusCode(),errorResponse.getError().getCode());
-                    throw new TossCancelPaymentException(code);
-                })
-                .onStatus(HttpStatusCode::is5xxServerError,(request, response) -> {
-                    TossErrorResponse errorResponse = parseClientErrorResponse(response);
-                    TossCancelPaymentErrorCode code = mapTossCancelPaymentErrorCodeToEnum(response.getStatusCode(),errorResponse.getError().getCode());
-                    throw new TossCancelPaymentException(code);
-                })
-                .body(TossPaymentResponse.class);
+                .onStatus(HttpStatusCode::is4xxClientError, response ->
+                        response.bodyToMono(TossErrorResponse.class)
+                                .flatMap(errorResponse -> {
+                                    TossCancelPaymentErrorCode code = mapTossCancelPaymentErrorCodeToEnum(response.statusCode(),
+                                            errorResponse != null && errorResponse.getError() != null ? errorResponse.getError().getCode() : null);
+                                    return Mono.<Throwable>error(new TossCancelPaymentException(code));
+                                })
+                                .switchIfEmpty(Mono.<Throwable>error(new TossCancelPaymentException(TossCancelPaymentErrorCode.COMMON_ERROR)))
+                )
+                .onStatus(HttpStatusCode::is5xxServerError, response ->
+                        response.bodyToMono(TossErrorResponse.class)
+                                .flatMap(errorResponse -> {
+                                    TossCancelPaymentErrorCode code = mapTossCancelPaymentErrorCodeToEnum(response.statusCode(),
+                                            errorResponse != null && errorResponse.getError() != null ? errorResponse.getError().getCode() : null);
+                                    return Mono.<Throwable>error(new TossCancelPaymentException(code));
+                                })
+                                .switchIfEmpty(Mono.<Throwable>error(new TossCancelPaymentException(TossCancelPaymentErrorCode.COMMON_ERROR)))
+                )
+                .bodyToMono(TossPaymentResponse.class)
+                .flatMap(res ->
+                        Mono.fromCallable(() -> {
+                                    TossPayment tossPayment = tossPaymentRepository.findByPaymentKey(paymentKey)
+                                            .orElseThrow(() -> new TossPaymentException(TossPaymentErrorCode.NOT_FOUND_PAYMENT));
 
-        TossPayment tossPayment = tossPaymentRepository.findByPaymentKey(paymentKey)
-                .orElseThrow(() -> new TossPaymentException(TossPaymentErrorCode.NOT_FOUND_PAYMENT));
-
-        tossPayment.setStatus(res.getStatus());
-        if (res.getCancels() != null && !res.getCancels().isEmpty()) {
-            TossPaymentResponse.Cancels firstCancel = res.getCancels().get(0);
-            tossPayment.setCancelAt(firstCancel.getCanceledAt());
-            tossPayment.setCancelReason(firstCancel.getCancelReason());
-        }
-        tossPaymentRepository.save(tossPayment);
-
-        return res;
+                                    tossPayment.setStatus(res.getStatus());
+                                    if (res.getCancels() != null && !res.getCancels().isEmpty()) {
+                                        TossPaymentResponse.Cancels firstCancel = res.getCancels().get(0);
+                                        tossPayment.setCancelAt(firstCancel.getCanceledAt());
+                                        tossPayment.setCancelReason(firstCancel.getCancelReason());
+                                    }
+                                    tossPaymentRepository.save(tossPayment);
+                                    return res;
+                                })
+                                .subscribeOn(Schedulers.boundedElastic())
+                );
     }
 
     private String createAuthorizationHeader() {

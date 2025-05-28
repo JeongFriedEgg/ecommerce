@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import reactor.core.publisher.Mono;
 
 @RestController
 @RequiredArgsConstructor
@@ -20,17 +21,15 @@ public class PaymentController {
     private final PaymentApplication paymentApplication;
 
     @PostMapping("/confirm")
-    public ResponseEntity<PaymentConfirm.Response> confirmPayment(
+    public Mono<ResponseEntity<PaymentConfirm.Response>> confirmPayment(
             @RequestBody PaymentConfirm.Request req,
             @AuthenticationPrincipal CustomUserDetails userDetails
     ){
         String username = userDetails.getUsername();
 
-        PaymentConfirm.Response res =
-                paymentApplication.confirmPayment(req, username);
-
-        return ResponseEntity
-                .status(HttpStatus.OK)
-                .body(res);
+        return paymentApplication.confirmPayment(req, username)
+                .map(res -> ResponseEntity
+                        .status(HttpStatus.OK)
+                        .body(res));
     }
 }
