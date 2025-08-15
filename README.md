@@ -115,10 +115,11 @@
 
 
 ## ✅ 사용기술
-- JAVA 17
-- Spring Boot v3.4.5
-- Spring Framework v6.2.6
+- JAVA
+- Spring Boot
+- Spring Framework
 - Spring Security
 - Spring Data JPA
-- Spring Kafka
-- MySQL
+- Spring WebFlux
+- MySQL / Redis
+- Docker / AWS S3
